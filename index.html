@@ -432,11 +432,19 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* =========================================================
    Zagon — logika
    ========================================================= */
 const KEY = 'zagon.v1';
+
+/* --- Supabase (konta + synchronizacja) --- */
+const SUPABASE_URL='https://bmjvfscyosyhmtpskphm.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtanZmc2N5b3N5aG10cHNrcGhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0Njk2NzAsImV4cCI6MjEwMDA0NTY3MH0.AmwhPYBWEQO7YoIeeTybyNLGmzQAgHvwcj1Sd51b6Zk';
+const sb = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}})
+  : null;
 
 const CROP_COLORS = {
   'Pszenica ozima':'#D4A83A','Pszenica jara':'#E0BE55',
@@ -480,12 +488,8 @@ const CIAZA_DNI = 283; // średnia ciąża krowy
 /* Kolory obrysów pól na mapie (styl John Deere Operations Center) */
 const FIELD_BORDER = ['#F0B13A','#8E6FBE','#E8833A','#57B657','#D9534F','#4A90D9','#FFFFFF','#3DB4C4'];
 
-let state = load();
-if(!state.ui) state.ui={};
-if(!state.cropColors) state.cropColors={};
-if(!state.machines) state.machines=[];
-if(!state.finance) state.finance=[];
-if(!state.cattle) state.cattle=[];
+let state = emptyState();
+let currentUserId=null, currentEmail=null;
 let view = {module:'pulpit', name:'sezon', fieldId:null, year:currentSeasonYear(),
             machineId:null, cattleId:null, finYear:new Date().getFullYear(), finMonth:null};
 
@@ -496,14 +500,42 @@ let CMAP=null, createDrawn=null, newFieldGeo=null;   // ekran „Nowe pole"
 function currentSeasonYear(){ const d=new Date(); return d.getMonth()>=7 ? d.getFullYear()+1 : d.getFullYear(); }
 function uid(){ return 'f'+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3); }
 
-function load(){
-  try{ const raw=localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){ console.warn('load',e); }
-  return seed();
+function emptyState(){ return {farm:{nazwa:'Moje gospodarstwo'}, ui:{}, cropColors:{}, fields:[], machines:[], finance:[], cattle:[]}; }
+function ensureShape(){
+  state=state||{}; state.farm=state.farm||{nazwa:'Moje gospodarstwo'}; state.ui=state.ui||{}; state.cropColors=state.cropColors||{};
+  state.fields=state.fields||[]; state.machines=state.machines||[]; state.finance=state.finance||[]; state.cattle=state.cattle||[];
 }
+/* Wczytanie stanu gospodarstwa danego użytkownika (z chmury; offline → cache) */
+async function loadStateForUser(user){
+  currentUserId=user.id; currentEmail=user.email;
+  let loaded=null;
+  try{
+    const { data, error } = await sb.from('user_state').select('data').eq('user_id',user.id).maybeSingle();
+    if(error) throw error;
+    if(data && data.data && Object.keys(data.data).length) loaded=data.data;
+  }catch(e){
+    const c=localStorage.getItem('mfarmx.cache.'+user.id); if(c){ try{ loaded=JSON.parse(c); }catch(_){} }
+  }
+  if(loaded){ state=loaded; ensureShape(); }
+  else { state=emptyState(); ensureShape(); await saveCloud(); }   // nowy rolnik → puste gospodarstwo + utworzenie wiersza
+  try{ localStorage.setItem('mfarmx.cache.'+user.id, JSON.stringify(state)); }catch(e){}
+}
+/* Zapis: natychmiast do cache, do chmury z debounce */
 function save(){
-  localStorage.setItem(KEY, JSON.stringify(state));
+  if(currentUserId){ try{ localStorage.setItem('mfarmx.cache.'+currentUserId, JSON.stringify(state)); }catch(e){} }
+  const n=document.getElementById('savedNote'); if(n) n.textContent='zapisywanie…';
+  scheduleCloudSave();
+}
+let _saveT=null;
+function scheduleCloudSave(){ clearTimeout(_saveT); _saveT=setTimeout(saveCloud, 700); }
+async function saveCloud(){
+  if(!sb || !currentUserId) return;
   const n=document.getElementById('savedNote');
-  if(n) n.textContent='zapisano '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+  try{
+    const { error } = await sb.from('user_state').upsert({ user_id:currentUserId, data:state, updated_at:new Date().toISOString() });
+    if(error) throw error;
+    if(n) n.textContent='zsynchronizowano '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){ if(n) n.textContent='offline — zapiszę po połączeniu'; }
 }
 
 /* ---------- Dane przykładowe ---------- */
@@ -608,23 +640,18 @@ function fieldsWithGeo(){ return state.fields.filter(f=>f.geo&&f.geo.polygon&&f.
 function allYears(){ const s=new Set(); state.fields.forEach(f=>f.sezony.forEach(z=>s.add(z.rok))); s.add(view.year); return [...s].sort((a,b)=>b-a); }
 
 /* =========================================================
-   LOGOWANIE (lokalna bramka — Etap 1)
+   LOGOWANIE (Supabase Auth — konta w chmurze, sync)
    ========================================================= */
-const AUTHKEY='mfarmx.auth', SESSKEY='mfarmx.session';
-let auth = JSON.parse(localStorage.getItem(AUTHKEY)||'null');
-let authed = false;
-(function(){ const tok=localStorage.getItem(SESSKEY)||sessionStorage.getItem(SESSKEY); if(auth&&tok&&tok===auth.hash) authed=true; })();
-
-function hashPwd(s,salt){
-  const str='mfx:'+(salt||'')+':'+(s||'');
-  let h=5381, h2=52711;
-  for(let i=0;i<str.length;i++){ h=((h<<5)+h+str.charCodeAt(i))>>>0; }
-  for(let i=str.length-1;i>=0;i--){ h2=((h2<<5)+h2+str.charCodeAt(i))>>>0; }
-  return (h>>>0).toString(16).padStart(8,'0')+(h2>>>0).toString(16).padStart(8,'0');
-}
-function boot(){
-  if(!auth) return renderOnboarding();
-  if(!authed) return renderLogin();
+async function boot(){
+  if(!sb){
+    document.getElementById('app').innerHTML=authScreen(`<h2>Brak połączenia</h2>
+      <p class="auth-sub">Nie udało się załadować serwera (sprawdź internet i odśwież stronę).</p>`);
+    return;
+  }
+  sb.auth.onAuthStateChange((event)=>{ if(event==='SIGNED_OUT'){ currentUserId=null; currentEmail=null; renderAuth('login'); } });
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ renderAuth('login'); return; }
+  await loadStateForUser(session.user);
   render();
 }
 function authScreen(inner){
@@ -642,54 +669,75 @@ function authScreen(inner){
     <div class="auth-panel"><div class="auth-card">${inner}</div></div>
   </div>`;
 }
-function renderOnboarding(){
-  document.getElementById('app').innerHTML=authScreen(`
-    <h2>Witaj w M-FarmX</h2>
-    <p class="auth-sub">Utwórz konto, aby zabezpieczyć dostęp do danych gospodarstwa.</p>
-    <div class="field"><label>Login</label><input id="ob_user" placeholder="np. rolnik" autofocus></div>
-    <div class="field"><label>Hasło</label><input id="ob_pass" type="password" placeholder="min. 4 znaki"></div>
-    <div class="field"><label>Powtórz hasło</label><input id="ob_pass2" type="password" onkeydown="if(event.key==='Enter')doOnboard()"></div>
-    <button class="btn primary auth-btn" onclick="doOnboard()">Utwórz konto i wejdź</button>
-    <div id="auth_err" class="auth-err"></div>
-    <div class="auth-note">Konto zapisywane jest lokalnie w tej przeglądarce.<br>Dane gospodarstwa i hasło trzymane są osobno.</div>
-  `);
+function renderAuth(mode){
+  const el=document.getElementById('app');
+  el.innerHTML=authScreen(mode==='signup'?signupCard():mode==='reset'?resetCard():loginCard());
+  setTimeout(()=>{ const e=document.getElementById('au_email'); if(e) e.focus(); },0);
 }
-function doOnboard(){
-  const u=val('ob_user').trim(), p=val('ob_pass'), p2=val('ob_pass2');
-  const err=document.getElementById('auth_err');
-  if(u.length<3){ err.textContent='Login musi mieć min. 3 znaki.'; return; }
-  if(p.length<4){ err.textContent='Hasło musi mieć min. 4 znaki.'; return; }
+function loginCard(){ return `
+  <h2>Zaloguj się</h2>
+  <p class="auth-sub">Dostęp do Twojego gospodarstwa.</p>
+  <div class="field"><label>E-mail</label><input id="au_email" type="email" autocomplete="email"></div>
+  <div class="field"><label>Hasło</label><input id="au_pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+  <button class="btn primary auth-btn" onclick="doLogin()">Zaloguj się</button>
+  <div id="auth_err" class="auth-err"></div>
+  <div class="auth-note">Nie masz konta? <a href="#" onclick="renderAuth('signup');return false" style="color:var(--pole);font-weight:600">Załóż konto</a>
+    &nbsp;·&nbsp; <a href="#" onclick="renderAuth('reset');return false" style="color:var(--ink-soft)">Nie pamiętam hasła</a></div>`;
+}
+function signupCard(){ return `
+  <h2>Załóż konto</h2>
+  <p class="auth-sub">Nowe gospodarstwo — startujesz z pustą bazą.</p>
+  <div class="field"><label>E-mail</label><input id="au_email" type="email" autocomplete="email"></div>
+  <div class="field"><label>Hasło</label><input id="au_pass" type="password" autocomplete="new-password" placeholder="min. 6 znaków"></div>
+  <div class="field"><label>Powtórz hasło</label><input id="au_pass2" type="password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSignup()"></div>
+  <button class="btn primary auth-btn" onclick="doSignup()">Załóż konto</button>
+  <div id="auth_err" class="auth-err"></div>
+  <div id="auth_ok" class="auth-note" style="color:var(--pole-dark)"></div>
+  <div class="auth-note">Masz już konto? <a href="#" onclick="renderAuth('login');return false" style="color:var(--pole);font-weight:600">Zaloguj się</a></div>`;
+}
+function resetCard(){ return `
+  <h2>Reset hasła</h2>
+  <p class="auth-sub">Wyślemy link do ustawienia nowego hasła.</p>
+  <div class="field"><label>E-mail</label><input id="au_email" type="email" autocomplete="email" onkeydown="if(event.key==='Enter')doReset()"></div>
+  <button class="btn primary auth-btn" onclick="doReset()">Wyślij link</button>
+  <div id="auth_err" class="auth-err"></div>
+  <div id="auth_ok" class="auth-note" style="color:var(--pole-dark)"></div>
+  <div class="auth-note"><a href="#" onclick="renderAuth('login');return false" style="color:var(--pole)">← wróć do logowania</a></div>`;
+}
+async function doLogin(){
+  const email=val('au_email').trim(), pass=val('au_pass');
+  const err=document.getElementById('auth_err'); err.textContent='';
+  if(!email||!pass){ err.textContent='Podaj e-mail i hasło.'; return; }
+  err.textContent='Logowanie…';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
+  if(error){ err.textContent = /confirm/i.test(error.message) ? 'Najpierw potwierdź e-mail (sprawdź skrzynkę).' : 'Nieprawidłowy e-mail lub hasło.'; return; }
+  await loadStateForUser(data.user); render();
+}
+async function doSignup(){
+  const email=val('au_email').trim(), p=val('au_pass'), p2=val('au_pass2');
+  const err=document.getElementById('auth_err'), ok=document.getElementById('auth_ok'); err.textContent=''; ok.textContent='';
+  if(!email){ err.textContent='Podaj e-mail.'; return; }
+  if((p||'').length<6){ err.textContent='Hasło musi mieć min. 6 znaków.'; return; }
   if(p!==p2){ err.textContent='Hasła nie są takie same.'; return; }
-  const salt=Math.random().toString(36).slice(2,12);
-  auth={user:u,salt,hash:hashPwd(p,salt),created:new Date().toISOString()};
-  localStorage.setItem(AUTHKEY,JSON.stringify(auth));
-  authed=true; localStorage.setItem(SESSKEY,auth.hash);
-  render();
+  err.textContent='Zakładanie konta…';
+  const { data, error } = await sb.auth.signUp({ email, password:p });
+  if(error){ err.textContent=error.message; return; }
+  err.textContent='';
+  if(data.session){ await loadStateForUser(data.user); render(); }
+  else { ok.textContent='Konto założone! Sprawdź e-mail, kliknij link potwierdzający i zaloguj się.'; }
 }
-function renderLogin(){
-  document.getElementById('app').innerHTML=authScreen(`
-    <h2>Zaloguj się</h2>
-    <p class="auth-sub">Dostęp do danych gospodarstwa.</p>
-    <div class="field"><label>Login</label><input id="lg_user" value="${esc(auth.user||'')}"></div>
-    <div class="field"><label>Hasło</label><input id="lg_pass" type="password" autofocus onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <label class="auth-remember"><input type="checkbox" id="lg_remember" checked> Zapamiętaj mnie na tym urządzeniu</label>
-    <button class="btn primary auth-btn" onclick="doLogin()">Zaloguj się</button>
-    <div id="auth_err" class="auth-err"></div>
-  `);
+async function doReset(){
+  const email=val('au_email').trim();
+  const err=document.getElementById('auth_err'), ok=document.getElementById('auth_ok'); err.textContent=''; ok.textContent='';
+  if(!email){ err.textContent='Podaj e-mail.'; return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  if(error){ err.textContent=error.message; return; }
+  ok.textContent='Jeśli konto istnieje, wysłaliśmy link na e-mail.';
 }
-function doLogin(){
-  const u=val('lg_user').trim(), p=val('lg_pass');
-  const err=document.getElementById('auth_err');
-  if(u!==auth.user || hashPwd(p,auth.salt)!==auth.hash){ err.textContent='Nieprawidłowy login lub hasło.'; return; }
-  authed=true;
-  localStorage.removeItem(SESSKEY); sessionStorage.removeItem(SESSKEY);
-  (document.getElementById('lg_remember').checked?localStorage:sessionStorage).setItem(SESSKEY,auth.hash);
-  render();
-}
-function logout(){
+async function logout(){
   if(!confirm('Wylogować się z M-FarmX?')) return;
-  authed=false; localStorage.removeItem(SESSKEY); sessionStorage.removeItem(SESSKEY);
-  renderLogin();
+  try{ await sb.auth.signOut(); }catch(e){}
+  currentUserId=null; currentEmail=null; renderAuth('login');
 }
 
 function render(){
@@ -757,7 +805,7 @@ function icon(n,s=18){
 function renderNavbar(){
   const years=allYears();
   const yopts=years.map(y=>`<option value="${y}" ${y===view.year?'selected':''}>Sezon ${y}</option>`).join('');
-  const uname=(auth&&auth.user)||state.farm.nazwa||'Gospodarstwo';
+  const uname=currentEmail||state.farm.nazwa||'Gospodarstwo';
   const initials=((uname||'G').trim()[0]||'G').toUpperCase();
   const pend=feedPending();
   return `<div class="navbar">
