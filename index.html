@@ -339,6 +339,8 @@
   .sb-item.active{background:rgba(94,127,84,.12);border-color:transparent;color:var(--pole-dark);box-shadow:none}
   .sb-item.active .ic{color:var(--pole)}
   .sb-count{background:#F0F1F2;border-radius:10px;padding:0 7px;color:var(--ink-soft)}
+  .sb-ic-img{width:23px;height:23px;object-fit:contain;display:block}
+  @media(max-width:900px){ .sb-ic-img{width:26px;height:26px} }
   .layout.collapsed .sidebar{display:none}
   @media(max-width:900px){ .sidebar{top:0;height:auto} }
 
@@ -763,7 +765,7 @@ function render(){
 
 function renderSidebar(){
   const item=(m,ic,lbl,count)=>`<button class="sb-item ${view.module===m?'active':''}" onclick="goModule('${m}')">
-    <span class="ic">${ic}</span><span class="lbl">${lbl}</span>${count!=null?`<span class="sb-count">${count}</span>`:''}</button>`;
+    <span class="ic"><img src="icons/${m}.png" alt="" class="sb-ic-img" onerror="this.parentNode.textContent='${ic}'"></span><span class="lbl">${lbl}</span>${count!=null?`<span class="sb-count">${count}</span>`:''}</button>`;
   const naStanie=state.cattle.filter(c=>c.status==='na stanie').length;
   return `<aside class="sidebar">
     <div class="sb-brand" onclick="goModule('pulpit')" title="M-FarmX"><span class="glyph">M-FarmX</span><span class="tag">gospodarstwo</span></div>
