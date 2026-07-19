@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M-FarmX — gospodarstwo</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<style>
+  /* ===== Zagon — almanach polowy ===== */
+  :root{
+    /* John Deere Operations Center — enterprise, flat */
+    --ink:#3D3D3D;          /* tekst */
+    --ink-soft:#777777;     /* tekst drugorzędny */
+    --paper:#F4F5F6;        /* tło */
+    --card:#FFFFFF;         /* karty */
+    --card-2:#FAFBFB;
+    --pole:#5E7F54;         /* primary — oliwkowa zieleń */
+    --pole-dark:#4A6543;
+    --pole-light:#7A9D6A;
+    --wheat:#F0B13A;        /* warning */
+    --rust:#D9534F;         /* danger */
+    --success:#57B657;
+    --line:#E4E5E6;
+    --line-strong:#D8D8D8;
+    --shadow:0 2px 8px rgba(0,0,0,.08);
+    --serif:'Roboto',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --sans:'Roboto',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:'Roboto',system-ui,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:var(--sans);color:var(--ink);background:var(--paper);
+    -webkit-font-smoothing:antialiased;line-height:1.5;
+  }
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  button{font-family:inherit}
+
+  /* ---------- Layout: sidebar + treść ---------- */
+  .layout{display:flex;min-height:100vh}
+  .sidebar{width:236px;flex-shrink:0;background:linear-gradient(180deg,#EBECE0,#E7E8DC);border-right:1px solid var(--line-strong);
+    position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 14px;gap:4px;overflow-y:auto;z-index:1100}
+  .sb-brand{display:flex;align-items:baseline;gap:8px;padding:4px 8px 16px;cursor:pointer;user-select:none}
+  .sb-brand .glyph{font-family:var(--serif);font-size:27px;font-weight:700;color:var(--pole-dark);line-height:1}
+  .sb-brand .glyph::first-letter{color:var(--wheat)}
+  .sb-brand .tag{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-soft)}
+  .sb-nav{display:flex;flex-direction:column;gap:3px}
+  .sb-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--ink-soft);
+    font-size:15px;border:1px solid transparent;transition:.12s;text-align:left;background:none;font-family:var(--sans);width:100%}
+  .sb-item .ic{font-size:18px;width:22px;text-align:center;flex-shrink:0}
+  .sb-item:hover{background:rgba(255,255,255,.55);color:var(--ink)}
+  .sb-item.active{background:var(--card);color:var(--ink);border-color:var(--line);font-weight:600;box-shadow:var(--shadow)}
+  .sb-count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .sb-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
+  .sb-farm-lbl{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);padding:0 4px}
+  .sb-farm{font-family:var(--serif);font-size:16px;color:var(--ink);width:100%;border:none;background:transparent;
+    border-bottom:1px dashed var(--line-strong);padding:3px 4px}
+  .sb-farm:focus{outline:none;border-bottom-color:var(--pole)}
+  .sb-backup{display:flex;gap:7px}
+  .sb-saved{font-size:10.5px;color:var(--ink-soft);padding:0 4px}
+  .content{flex:1;min-width:0;padding:26px 30px;max-width:1180px;margin:0 auto;width:100%}
+  .module-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+  .module-head h1{font-family:var(--serif);font-size:32px;margin:0;line-height:1.05}
+  .module-head .sub{color:var(--ink-soft);font-size:13.5px;margin-top:5px}
+  .module-head .spacer{margin-left:auto}
+  .mini-stats{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+  .mini-stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow);min-width:120px}
+  .mini-stat b{font-family:var(--mono);font-size:22px;color:var(--pole-dark);display:block;line-height:1.1}
+  .mini-stat span{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft)}
+  @media(max-width:900px){
+    .layout{flex-direction:column}
+    .sidebar{width:100%;height:auto;position:sticky;top:0;flex-direction:row;align-items:center;padding:9px 12px;gap:4px;overflow-x:auto;overflow-y:hidden}
+    .sb-brand{padding:4px 6px;flex-shrink:0}
+    .sb-brand .tag{display:none}
+    .sb-nav{flex-direction:row;flex:0 0 auto}
+    .sb-item{white-space:nowrap;padding:8px 11px}
+    .sb-item .lbl{display:none} .sb-item .ic{font-size:20px}
+    .sb-item.active .lbl{display:inline}
+    .sb-count{display:none}
+    .sb-foot{margin:0 0 0 auto;padding:0;border:none;flex-direction:row;align-items:center;flex-shrink:0}
+    .sb-farm-lbl,.sb-farm,.sb-saved{display:none}
+    .content{padding:16px}
+  }
+
+  /* ---------- Karty modułów (Flota / Bydło) ---------- */
+  .tile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:.14s;display:flex;flex-direction:column}
+  .tile:hover{transform:translateY(-3px);border-color:var(--line-strong)}
+  .tile-bar{height:5px}
+  .tile-body{padding:15px 16px}
+  .tile-name{font-family:var(--serif);font-size:20px;margin:0;line-height:1.15}
+  .tile-sub{font-size:12.5px;color:var(--ink-soft);margin-top:3px}
+  .tile-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+  .tile-row .big{font-family:var(--mono);font-size:18px;color:var(--pole-dark)}
+  .tile-row .lab{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  .tag-pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:var(--card-2);border:1px solid var(--line);color:var(--ink-soft)}
+
+  /* ---------- Finanse ---------- */
+  .fin-months{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:24px}
+  .fin-month{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 13px;box-shadow:var(--shadow);cursor:pointer;transition:.12s}
+  .fin-month:hover{border-color:var(--line-strong)}
+  .fin-month.active{border-color:var(--wheat);box-shadow:0 0 0 2px rgba(200,155,44,.3)}
+  .fin-month .m{font-size:12px;color:var(--ink-soft);text-transform:capitalize}
+  .fin-month .v{font-family:var(--mono);font-size:16px;color:var(--rust);font-weight:600;margin-top:3px}
+  .fin-month .v.plus{color:var(--pole-dark)}
+  .cat-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+  .cat-chip{display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:13px}
+  .cat-chip .dot{width:10px;height:10px;border-radius:50%}
+  .cat-chip b{font-family:var(--mono)}
+  .fin-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+  .fin-table th{text-align:left;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--line-strong);background:rgba(255,255,255,.5)}
+  .fin-table td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:14px}
+  .fin-table tr:last-child td{border-bottom:none}
+  .fin-month-head td{background:rgba(43,38,32,.05);font-weight:600;font-family:var(--serif);font-size:16px}
+  .fin-amt{font-family:var(--mono);text-align:right;white-space:nowrap}
+  .fin-amt.koszt{color:var(--rust)} .fin-amt.przychod{color:var(--pole-dark)}
+
+  /* ---------- Nagłówek (stary, nieużywany po przejściu na sidebar) ---------- */
+  .topbar{position:sticky;top:0;z-index:1100;background:linear-gradient(180deg,#EBECE0,#E4E5D8);
+    border-bottom:1px solid var(--line-strong);box-shadow:0 6px 18px -18px rgba(43,38,32,.9)}
+  .topbar-inner{max-width:1180px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:10px;cursor:pointer;user-select:none}
+  .brand .glyph{font-family:var(--serif);font-size:30px;font-weight:700;color:var(--pole-dark);letter-spacing:-.01em;line-height:1}
+  .brand .glyph::first-letter{color:var(--wheat)}
+  .brand .tag{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft)}
+  .farm-name{font-family:var(--serif);font-size:18px;color:var(--ink);border:none;background:transparent;
+    border-bottom:1px dashed transparent;padding:2px 2px;min-width:120px;max-width:260px}
+  .farm-name:hover{border-bottom-color:var(--line-strong)}
+  .farm-name:focus{outline:none;border-bottom-color:var(--pole)}
+  .stats{display:flex;gap:26px;margin-left:auto;align-items:center}
+  .stat{text-align:right;line-height:1.15}
+  .stat b{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--pole-dark);display:block}
+  .stat span{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft)}
+  .top-actions{display:flex;gap:8px;align-items:center}
+
+  /* ---------- Przyciski ---------- */
+  .btn{border:1px solid var(--line-strong);background:var(--card);color:var(--ink);padding:8px 13px;border-radius:9px;
+    font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.12s;white-space:nowrap}
+  .btn:hover{background:var(--card-2);border-color:var(--ink-soft);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn.primary{background:var(--pole);border-color:var(--pole-dark);color:#F7F6EF;font-weight:600}
+  .btn.primary:hover{background:var(--pole-dark)}
+  .btn.ghost{background:transparent;border-color:transparent}
+  .btn.ghost:hover{border-color:var(--line)}
+  .btn.small{padding:5px 10px;font-size:12.5px;border-radius:7px}
+  .btn.danger:hover{border-color:var(--rust);color:var(--rust)}
+
+  /* ---------- Zakładki widoku ---------- */
+  main{max-width:1180px;margin:0 auto;padding:22px}
+  .tabs{display:flex;align-items:center;gap:4px;margin-bottom:20px;flex-wrap:wrap}
+  .tab{font-family:var(--serif);font-size:16px;padding:7px 4px;margin-right:18px;border:none;background:none;
+    cursor:pointer;color:var(--ink-soft);border-bottom:2px solid transparent}
+  .tab.active{color:var(--ink);border-bottom-color:var(--wheat)}
+  .year-pick{margin-left:auto;display:flex;align-items:center;gap:8px}
+  select,input,textarea{font-family:var(--sans);font-size:14px;color:var(--ink)}
+  .sel{padding:6px 10px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-family:var(--mono);font-size:14px}
+
+  /* ---------- Mapa ---------- */
+  .map-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .map-search{flex:1;min-width:180px;max-width:360px;padding:9px 12px;border:1px solid var(--line-strong);
+    border-radius:9px;background:var(--card-2)}
+  #map{height:min(72vh,640px);width:100%;border-radius:14px;border:1px solid var(--line-strong);box-shadow:var(--shadow);z-index:1}
+  .map-off{display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;height:min(72vh,640px);
+    color:var(--ink-soft);text-align:center;padding:30px;border-radius:14px;border:1px solid var(--line-strong);
+    background:repeating-linear-gradient(45deg,#e9e7db 0 12px,#efedE3 12px 24px)}
+  .map-hint{font-size:12.5px;color:var(--ink-soft);margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  .leaflet-tooltip.field-label{background:rgba(43,38,32,.82);color:#F7F6EF;border:none;font-family:var(--sans);
+    font-weight:600;font-size:12px;border-radius:6px;box-shadow:none;padding:3px 8px;white-space:nowrap}
+  .leaflet-tooltip.field-label::before{display:none}
+  .leaflet-tooltip.field-label small{font-family:var(--mono);opacity:.85;font-weight:400}
+  .drawing-banner{background:var(--wheat);color:#2B2620;padding:9px 14px;border-radius:9px;font-size:13.5px;font-weight:600;
+    margin-bottom:10px;display:flex;align-items:center;gap:10px}
+
+  /* ---------- Siatka pól ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .field-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+    overflow:hidden;cursor:pointer;transition:.14s;display:flex;flex-direction:column}
+  .field-card:hover{transform:translateY(-3px);border-color:var(--line-strong)}
+  .fc-head{padding:15px 16px 12px;display:flex;justify-content:space-between;gap:10px}
+  .fc-name{font-family:var(--serif);font-size:20px;line-height:1.15;margin:0}
+  .fc-loc{font-size:12px;color:var(--ink-soft);margin-top:3px}
+  .fc-geo{font-size:11px;color:var(--pole-dark);margin-top:5px;display:inline-flex;align-items:center;gap:4px}
+  .fc-area{text-align:right;line-height:1.1;flex-shrink:0}
+  .fc-area b{font-family:var(--mono);font-size:19px;color:var(--pole-dark)}
+  .fc-area span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);display:block}
+
+  /* ===== ELEMENT-PODPIS: pasmo płodozmianu ===== */
+  .ribbon{padding:2px 16px 14px}
+  .ribbon-label{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+  .ribbon-track{display:flex;height:38px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+  .ribbon-seg{flex:1;min-width:0;position:relative;display:flex;align-items:flex-end;justify-content:center;
+    padding-bottom:3px;border-right:1px solid rgba(255,255,255,.35)}
+  .ribbon-seg:last-child{border-right:none}
+  .ribbon-seg .yr{font-family:var(--mono);font-size:10px;color:rgba(43,38,32,.7);font-weight:600}
+  .ribbon-seg.empty{background:repeating-linear-gradient(45deg,#e9e7db 0 6px,#efedE3 6px 12px)}
+  .ribbon-seg.empty .yr{color:var(--ink-soft)}
+  .ribbon-crop{position:absolute;top:4px;left:0;right:0;text-align:center;font-size:10.5px;font-weight:600;
+    color:rgba(43,38,32,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px}
+  .fc-foot{margin-top:auto;padding:11px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;
+    align-items:center;background:rgba(255,255,255,.4)}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 9px 3px 7px;
+    border-radius:20px;background:var(--card-2);border:1px solid var(--line)}
+  .badge .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .fc-yield{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+  .fc-yield b{color:var(--pole-dark)}
+  .add-card{border:1.5px dashed var(--line-strong);border-radius:14px;background:transparent;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:180px;cursor:pointer;color:var(--ink-soft);transition:.14s}
+  .add-card:hover{border-color:var(--pole);color:var(--pole-dark);background:rgba(92,122,52,.05)}
+  .add-card .plus{font-size:34px;font-family:var(--serif);line-height:1}
+
+  /* ---------- Widok Sezon ---------- */
+  .season-wrap{overflow-x:auto}
+  .season-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);min-width:720px}
+  .season-table th{text-align:left;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
+    font-weight:600;padding:12px 14px;border-bottom:1px solid var(--line-strong);background:rgba(255,255,255,.5)}
+  .season-table td{padding:12px 14px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+  .season-table tr:last-child td{border-bottom:none}
+  .season-table tr[data-field]{cursor:pointer}
+  .season-table tr[data-field]:hover td{background:rgba(200,155,44,.07)}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .muted{color:var(--ink-soft)}
+
+  /* ---------- Detal pola ---------- */
+  .detail-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:22px;flex-wrap:wrap}
+  .detail-head h1{font-family:var(--serif);font-size:34px;margin:0;line-height:1.05}
+  .detail-meta{display:flex;gap:22px;margin-top:8px;flex-wrap:wrap}
+  .detail-meta div span{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);display:block}
+  .detail-meta div b{font-family:var(--mono);font-size:17px;color:var(--pole-dark)}
+  .detail-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .mini-map{height:200px;border-radius:12px;border:1px solid var(--line-strong);margin-bottom:20px;z-index:1}
+  .create-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:22px;align-items:start}
+  @media(max-width:820px){.create-grid{grid-template-columns:1fr}}
+  #createMap{height:min(60vh,480px);border-radius:14px;border:1px solid var(--line-strong);box-shadow:var(--shadow);z-index:1}
+  .create-form{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px}
+  .fc-kom{font-size:12px;color:var(--ink-soft);margin-top:6px;font-style:italic}
+  .color-row{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px dotted var(--line)}
+  .color-row input[type=color]{width:40px;height:30px;border:1px solid var(--line-strong);border-radius:7px;background:none;padding:2px;cursor:pointer}
+
+  .season{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+  .season-bar{height:5px}
+  .season-top{padding:16px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;cursor:pointer}
+  .season-year{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--ink)}
+  .season-crop{font-family:var(--serif);font-size:22px}
+  .season-odm{font-size:13px;color:var(--ink-soft)}
+  .season-quick{margin-left:auto;display:flex;gap:20px;align-items:center}
+  .season-quick .q b{font-family:var(--mono);font-size:16px;color:var(--pole-dark)}
+  .season-quick .q span{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);display:block}
+  .chev{transition:.2s;color:var(--ink-soft);font-size:13px}
+  .season.open .chev{transform:rotate(90deg)}
+  .season-body{display:none;padding:0 18px 18px;border-top:1px solid var(--line)}
+  .season.open .season-body{display:block}
+  .sb-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding-top:16px}
+  @media(max-width:680px){.sb-grid{grid-template-columns:1fr}}
+  .sb-title{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px;
+    display:flex;align-items:center;justify-content:space-between}
+  .kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--line);font-size:14px}
+  .kv:last-child{border-bottom:none}
+  .kv b{font-family:var(--mono)}
+  .zabieg-list{display:flex;flex-direction:column;gap:7px}
+  .zabieg{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.55);border:1px solid var(--line)}
+  .zabieg .z-kind{width:8px;height:34px;border-radius:3px;flex-shrink:0}
+  .zabieg .z-main{flex:1;min-width:0}
+  .zabieg .z-name{font-size:13.5px;font-weight:600}
+  .zabieg .z-sub{font-size:11.5px;color:var(--ink-soft)}
+  .zabieg .z-dose{font-family:var(--mono);font-size:13px;color:var(--rust);font-weight:600;white-space:nowrap;text-align:right}
+  .zabieg .z-dose small{display:block;color:var(--ink-soft);font-weight:400;font-size:10.5px}
+  .z-empty{font-size:13px;color:var(--ink-soft);font-style:italic;padding:6px 0}
+  .cost-line{margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);font-size:13px;display:flex;justify-content:space-between}
+  .cost-line b{font-family:var(--mono);color:var(--rust)}
+
+  /* ---------- Modal ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(43,38,32,.42);display:none;z-index:2000;align-items:flex-start;
+    justify-content:center;padding:40px 16px;overflow:auto;backdrop-filter:blur(2px)}
+  .overlay.on{display:flex}
+  .modal{background:var(--card);border-radius:16px;max-width:520px;width:100%;box-shadow:0 30px 70px -20px rgba(43,38,32,.6);
+    border:1px solid var(--line-strong);overflow:hidden;animation:pop .16s ease-out}
+  @keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+  .modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal-head h3{font-family:var(--serif);font-size:22px;margin:0}
+  .modal-body{padding:20px 22px}
+  .modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px;background:rgba(255,255,255,.4)}
+  .x{border:none;background:none;font-size:22px;cursor:pointer;color:var(--ink-soft);line-height:1;padding:2px 6px}
+  .x:hover{color:var(--ink)}
+  .field{margin-bottom:15px}
+  .field.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--card-2)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--pole);box-shadow:0 0 0 3px rgba(92,122,52,.12)}
+  .field textarea{resize:vertical;min-height:60px}
+  .hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px}
+  .geo-note{background:rgba(92,122,52,.1);border:1px solid rgba(92,122,52,.3);border-radius:9px;padding:9px 12px;
+    font-size:12.5px;color:var(--pole-dark);margin-bottom:15px;display:flex;align-items:center;gap:8px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:26px;padding-top:16px;border-top:1px solid var(--line)}
+  .legend .li{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft)}
+  .legend .dot{width:11px;height:11px;border-radius:3px}
+  .empty-state{text-align:center;padding:70px 20px;color:var(--ink-soft)}
+  .empty-state .big{font-family:var(--serif);font-size:26px;color:var(--ink);margin-bottom:8px}
+  footer{max-width:1180px;margin:30px auto;padding:0 22px 40px;font-size:12px;color:var(--ink-soft);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  @media(max-width:640px){
+    .stats{width:100%;margin-left:0;justify-content:space-between;gap:14px;order:3}
+    .top-actions{order:2;margin-left:auto}
+    .detail-head h1{font-size:26px}
+  }
+
+  /* ===================== MOTYW ENTERPRISE (John Deere Operations Center) ===================== */
+  h1,h2,h3{font-family:var(--serif)}
+
+  /* Górny pasek nawigacji */
+  .navbar{height:64px;background:var(--pole);color:#fff;display:flex;align-items:center;gap:14px;padding:0 20px;
+    position:sticky;top:0;z-index:1200;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .nav-burger,.nav-icon{background:none;border:none;color:#fff;cursor:pointer;padding:8px;border-radius:6px;display:flex}
+  .nav-burger:hover,.nav-icon:hover{background:rgba(255,255,255,.14)}
+  .nav-logo{display:flex;align-items:center;gap:9px;cursor:pointer;font-weight:700;font-size:18px;letter-spacing:.01em}
+  .nav-logo .mark{width:30px;height:30px;border-radius:7px;background:#fff;color:var(--pole);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px}
+  .nav-logo .tag{font-weight:400;font-size:10.5px;opacity:.82;letter-spacing:.13em;text-transform:uppercase}
+  .nav-spacer{flex:1}
+  .nav-season{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:7px;padding:0 10px;height:38px}
+  .nav-season select{background:transparent;border:none;color:#fff;font-weight:500;font-size:13px;outline:none;cursor:pointer;min-height:0}
+  .nav-season select option{color:var(--ink)}
+  .nav-icon{position:relative}
+  .nav-badge{position:absolute;top:2px;right:2px;background:var(--wheat);color:#3D3D3D;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+  .nav-user{display:flex;align-items:center;gap:9px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:22px}
+  .nav-user:hover{background:rgba(255,255,255,.14)}
+  .nav-avatar{width:32px;height:32px;border-radius:50%;background:var(--pole-light);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:1.5px solid rgba(255,255,255,.5)}
+  .nav-user .nu-name{font-size:13px;font-weight:500;line-height:1.15}
+  .nav-user .nu-role{font-size:10.5px;opacity:.82}
+  @media(max-width:720px){ .nav-user .nu-name,.nav-user .nu-role,.nav-logo .tag{display:none} }
+
+  /* Sidebar płaski pod navbarem */
+  .sidebar{background:#fff;border-right:1px solid var(--line-strong);top:64px;height:calc(100vh - 64px);gap:2px}
+  .sb-brand{display:none}
+  .sb-item{border-radius:6px;font-weight:500}
+  .sb-item.active{background:rgba(94,127,84,.12);border-color:transparent;color:var(--pole-dark);box-shadow:none}
+  .sb-item.active .ic{color:var(--pole)}
+  .sb-count{background:#F0F1F2;border-radius:10px;padding:0 7px;color:var(--ink-soft)}
+  .layout.collapsed .sidebar{display:none}
+  @media(max-width:900px){ .sidebar{top:0;height:auto} }
+
+  /* Karty, promienie, cienie */
+  .field-card,.tile,.season,.mini-stat,.fin-month,.season-table,.fin-table,#map,#createMap,.mini-map,.map-off,.create-form,.modal,.geo-note{border-radius:8px}
+  .field-card,.tile{box-shadow:var(--shadow);border-color:var(--line-strong)}
+  .field-card:hover,.tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.10);border-color:var(--pole-light)}
+
+  /* Przyciski — płaskie */
+  .btn{border-radius:6px;font-weight:500;box-shadow:none}
+  .btn:hover{transform:none;background:#F7F8F8}
+  .btn.primary{background:var(--pole);border-color:var(--pole);color:#fff}
+  .btn.primary:hover{background:var(--pole-dark);border-color:var(--pole-dark)}
+  .btn.danger:hover{border-color:var(--rust);color:var(--rust);background:#fff}
+  .btn.ghost:hover{background:#F7F8F8}
+
+  /* Pola formularzy — 40px */
+  .field input,.field select,.field textarea,.sel,.map-search{min-height:40px;border-radius:6px;border-color:var(--line-strong)}
+  .field textarea{min-height:72px}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pole);box-shadow:0 0 0 3px rgba(94,127,84,.15)}
+
+  /* Zakładki — zielone podkreślenie */
+  .tab.active{border-bottom-color:var(--pole);color:var(--pole-dark)}
+
+  /* Tabele — enterprise */
+  .season-table,.fin-table{border:1px solid var(--line-strong)}
+  .season-table th,.fin-table th{background:#FAFBFB;color:var(--ink-soft)}
+  .season-table td,.fin-table td{border-color:var(--line)}
+  .season-table tr[data-field]:hover td{background:#F7F8F8}
+
+  .mini-stat{box-shadow:var(--shadow);border-color:var(--line-strong)}
+  .mini-stat b{color:var(--pole-dark)}
+  .badge,.tag-pill,.cat-chip{border-color:var(--line-strong)}
+  .module-head h1{font-weight:700}
+  .season-crop,.tile-name,.fc-name,.detail-head h1,.empty-state .big{font-family:var(--serif)}
+
+  /* Pasek statystyk */
+  .stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px}
+  .stat-card{background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:var(--shadow);padding:15px 18px;display:flex;align-items:center;gap:14px;transition:.14s;cursor:pointer}
+  .stat-card:active{transform:translateY(0)}
+  .stat-card:hover{box-shadow:0 6px 16px rgba(0,0,0,.10);transform:translateY(-2px)}
+  .stat-ic{width:40px;height:40px;border-radius:8px;background:rgba(94,127,84,.12);color:var(--pole);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .stat-num{font-size:24px;font-weight:700;color:var(--ink);line-height:1}
+  .stat-lab{font-size:12px;color:var(--ink-soft);margin-top:3px}
+
+  /* Pulpit — dwie kolumny */
+  .dash-grid{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+  @media(max-width:1000px){.dash-grid{grid-template-columns:1fr}}
+  .dash-feed{background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:var(--shadow);padding:6px;max-height:660px;overflow:auto}
+  .feed-head{padding:13px 12px 8px;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:space-between}
+  .feed-item{display:flex;gap:11px;padding:11px 12px;border-radius:8px;transition:.12s;align-items:flex-start}
+  .feed-item:hover{background:#F7F8F8}
+  .feed-ic{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+  .feed-main{flex:1;min-width:0}
+  .feed-title{font-size:13.5px;font-weight:500;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .feed-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .feed-date{font-size:11px;color:var(--ink-soft);margin-top:3px}
+  .st-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;white-space:nowrap;text-transform:uppercase;letter-spacing:.03em;flex-shrink:0}
+  .st-done{background:rgba(87,182,87,.16);color:#3f9a3f}
+  .st-work{background:rgba(240,177,58,.20);color:#b9832a}
+  .st-plan{background:#EEF0F1;color:#777}
+  .st-cancel{background:rgba(217,83,79,.16);color:var(--rust)}
+
+  .leaflet-interactive{transition:stroke-width .12s ease,fill-opacity .12s ease}
+
+  /* ===================== EKRAN LOGOWANIA ===================== */
+  .auth-wrap{display:flex;min-height:100vh}
+  .auth-side{width:42%;max-width:520px;background:linear-gradient(160deg,var(--pole),var(--pole-dark));color:#fff;padding:48px 44px;display:flex;flex-direction:column;justify-content:center;gap:18px}
+  .auth-brand{display:flex;align-items:center;gap:12px;font-size:30px;font-weight:700}
+  .auth-brand .mark{width:46px;height:46px;border-radius:11px;background:#fff;color:var(--pole);display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:700}
+  .auth-tagline{font-size:16px;opacity:.92;font-weight:400}
+  .auth-feats{list-style:none;padding:0;margin:16px 0 0;display:flex;flex-direction:column;gap:14px}
+  .auth-feats li{display:flex;align-items:center;gap:12px;font-size:15px;opacity:.96}
+  .auth-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:30px;background:var(--paper)}
+  .auth-card{background:#fff;border:1px solid var(--line-strong);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.10);padding:34px 32px;width:100%;max-width:380px}
+  .auth-card h2{font-family:var(--serif);font-size:24px;margin:0 0 4px;font-weight:700}
+  .auth-sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 22px}
+  .auth-btn{width:100%;justify-content:center;margin-top:10px;height:44px;font-size:15px}
+  .auth-remember{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin:6px 0 2px;cursor:pointer}
+  .auth-remember input{width:auto;min-height:0}
+  .auth-err{color:var(--rust);font-size:13px;margin-top:10px;min-height:16px;font-weight:500}
+  .auth-note{font-size:11.5px;color:var(--ink-soft);margin-top:16px;text-align:center;line-height:1.5}
+  @media(max-width:760px){ .auth-side{display:none} .auth-panel{width:100%} }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<input type="file" id="importFile" accept="application/json" hidden onchange="importData(event)">
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script>
+/* =========================================================
+   Zagon — logika
+   ========================================================= */
+const KEY = 'zagon.v1';
+
+const CROP_COLORS = {
+  'Pszenica ozima':'#D4A83A','Pszenica jara':'#E0BE55',
+  'Rzepak ozimy':'#C9CE3A','Rzepak':'#C9CE3A',
+  'Kukurydza':'#C08331','Kukurydza na ziarno':'#C08331','Kukurydza na kiszonkę':'#A9762C',
+  'Jęczmień ozimy':'#C9B36A','Jęczmień jary':'#D8C888','Jęczmień':'#C9B36A',
+  'Żyto':'#B79A5A','Owies':'#BFA24E','Pszenżyto':'#CBB25E',
+  'Ziemniaki':'#8A5A3C','Buraki cukrowe':'#7E3B52','Buraki':'#7E3B52',
+  'Groch':'#6E8C3F','Bobik':'#5F7D38','Łubin':'#7C9147','Soja':'#7A9B45',
+  'Gorczyca':'#D9C24A','Facelia':'#8A79C4','Poplon':'#9BA86F',
+  'Ugór':'#9A927F','Łąka':'#7FA05A','Trawy':'#7FA05A'
+};
+const DEFAULT_CROP_COLOR = '#7A8A6A';
+function cropColor(c){ if(!c) return '#d8d6cb'; return (state.cropColors&&state.cropColors[c]) || CROP_COLORS[c] || DEFAULT_CROP_COLOR; }
+
+const ZABIEG_KINDS = {herbicyd:'#9E5B33',fungicyd:'#6E8C3F',insektycyd:'#B5842B',zaprawa:'#7E6B9C',nawoz:'#5C7A34',regulator:'#5B8A93',inne:'#8A8275'};
+const ZABIEG_LABEL = {herbicyd:'Herbicyd',fungicyd:'Fungicyd',insektycyd:'Insektycyd',zaprawa:'Zaprawa',nawoz:'Nawóz',regulator:'Regulator',inne:'Inne'};
+const CROP_OPTIONS = ['Pszenica ozima','Pszenica jara','Rzepak ozimy','Kukurydza na ziarno','Kukurydza na kiszonkę','Jęczmień ozimy','Jęczmień jary','Żyto','Owies','Pszenżyto','Ziemniaki','Buraki cukrowe','Groch','Bobik','Łubin','Soja','Gorczyca','Facelia','Poplon','Ugór','Łąka'];
+
+/* --- Flota --- */
+const MACHINE_TYPES = ['Ciągnik','Kombajn','Opryskiwacz','Ładowarka','Prasa','Przyczepa','Rozrzutnik','Pług','Agregat','Siewnik','Inne'];
+const MACHINE_COLORS = {'Ciągnik':'#5C7A34','Kombajn':'#C89B2C','Opryskiwacz':'#5B8A93','Ładowarka':'#B5842B','Prasa':'#9E5B33','Przyczepa':'#8A8275','Rozrzutnik':'#7E6B9C','Pług':'#6E5A44','Agregat':'#6E8C3F','Siewnik':'#7A9B45','Inne':'#8A8275'};
+const PRZEGLAD_TYPES = {olejowy:'Wymiana oleju',techniczny:'Przegląd techniczny',naprawa:'Naprawa',ogumienie:'Ogumienie',ubezpieczenie:'Ubezpieczenie/OC',inne:'Inne'};
+
+/* --- Finanse --- */
+const FIN_CATEGORIES = {
+  ropa:{label:'Paliwo / ropa',color:'#3B2F27'}, opryski:{label:'Środki ochrony (ŚOR)',color:'#9E5B33'},
+  nawozy:{label:'Nawozy',color:'#5C7A34'}, nasiona:{label:'Nasiona / sadzeniaki',color:'#C89B2C'},
+  naprawy:{label:'Naprawy maszyn',color:'#7E6B9C'}, czesci:{label:'Części',color:'#5B8A93'},
+  zakupy:{label:'Zakupy / materiały',color:'#B5842B'}, robocizna:{label:'Robocizna',color:'#8A8275'},
+  paszy:{label:'Pasze',color:'#6E8C3F'}, weterynarz:{label:'Weterynarz',color:'#A6533B'},
+  dzierzawa:{label:'Dzierżawa / podatki',color:'#6E5A44'}, mleko:{label:'Sprzedaż mleka',color:'#7FA05A'},
+  plody:{label:'Sprzedaż płodów',color:'#7A9B45'}, doplaty:{label:'Dopłaty',color:'#C9CE3A'}, inne:{label:'Inne',color:'#9A927F'}
+};
+const MIESIACE = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
+
+/* --- Bydło --- */
+const CATTLE_SEX = ['krowa','jałówka','byk','cielę'];
+const CIAZA_DNI = 283; // średnia ciąża krowy
+
+/* Kolory obrysów pól na mapie (styl John Deere Operations Center) */
+const FIELD_BORDER = ['#F0B13A','#8E6FBE','#E8833A','#57B657','#D9534F','#4A90D9','#FFFFFF','#3DB4C4'];
+
+let state = load();
+if(!state.ui) state.ui={};
+if(!state.cropColors) state.cropColors={};
+if(!state.machines) state.machines=[];
+if(!state.finance) state.finance=[];
+if(!state.cattle) state.cattle=[];
+let view = {module:'pulpit', name:'sezon', fieldId:null, year:currentSeasonYear(),
+            machineId:null, cattleId:null, finYear:new Date().getFullYear(), finMonth:null};
+
+/* mapa – zmienne modułowe */
+let LMAP=null, drawnItems=null, drawTargetField=null, mapFocusFieldId=null, pendingGeo=null;
+let CMAP=null, createDrawn=null, newFieldGeo=null;   // ekran „Nowe pole"
+
+function currentSeasonYear(){ const d=new Date(); return d.getMonth()>=7 ? d.getFullYear()+1 : d.getFullYear(); }
+function uid(){ return 'f'+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3); }
+
+function load(){
+  try{ const raw=localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){ console.warn('load',e); }
+  return seed();
+}
+function save(){
+  localStorage.setItem(KEY, JSON.stringify(state));
+  const n=document.getElementById('savedNote');
+  if(n) n.textContent='zapisano '+new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ---------- Dane przykładowe ---------- */
+function seed(){
+  return {
+    farm:{ nazwa:'Gospodarstwo — przykład' },
+    ui:{}, cropColors:{},
+    fields:[
+      { id:uid(), nazwa:'Za stodołą', powierzchnia_ha:12.4, lokalizacja:'przy zabudowaniach, gleba II kl.',
+        komentarz:'Dojazd od strony podwórka. Uwaga na zastoisko wody w narożniku po deszczach.',
+        geo:{polygon:[[52.3012,17.2000],[52.3012,17.2078],[52.2984,17.2078],[52.2984,17.2000]]},
+        sezony:[
+          {rok:2026,uprawa:'Pszenica ozima',odmiana:'RGT Ritter',data_siewu:'2025-09-28',norma_wysiewu:'185 kg/ha',
+           zabiegi:[{data:'2025-10-12',rodzaj:'herbicyd',srodek:'Expert Met 56 WG',dawka:'0,4',jednostka:'kg/ha',koszt:'118'},
+             {data:'2026-04-05',rodzaj:'nawoz',srodek:'Saletra amonowa',dawka:'250',jednostka:'kg/ha',koszt:'980'},
+             {data:'2026-05-08',rodzaj:'fungicyd',srodek:'Input 460 EC',dawka:'1,0',jednostka:'l/ha',koszt:'340'}],
+           plon_t:'',plon_t_ha:'',wilgotnosc:'',data_zbioru:'',notatki:'Ładny wschód, lekkie wymarznięcie na skraju.'},
+          {rok:2025,uprawa:'Rzepak ozimy',odmiana:'DK Exception',data_siewu:'2024-08-24',norma_wysiewu:'2,8 kg/ha',
+           zabiegi:[{data:'2024-09-10',rodzaj:'herbicyd',srodek:'Butisan Star 416 SC',dawka:'2,0',jednostka:'l/ha',koszt:'520'},
+             {data:'2024-10-02',rodzaj:'insektycyd',srodek:'Karate Zeon 050 CS',dawka:'0,12',jednostka:'l/ha',koszt:'90'},
+             {data:'2025-04-18',rodzaj:'fungicyd',srodek:'Tilmor 240 EC',dawka:'1,0',jednostka:'l/ha',koszt:'260'}],
+           plon_t:'46.5',plon_t_ha:'3.75',wilgotnosc:'8',data_zbioru:'2025-07-22',notatki:'Dobry plon mimo suszy w maju.'},
+          {rok:2024,uprawa:'Kukurydza na ziarno',odmiana:'ES Faraday',data_siewu:'2024-04-26',norma_wysiewu:'88 tys/ha',
+           zabiegi:[{data:'2024-05-20',rodzaj:'herbicyd',srodek:'MaisTer Power',dawka:'1,5',jednostka:'l/ha',koszt:'410'}],
+           plon_t:'136.4',plon_t_ha:'11.0',wilgotnosc:'28',data_zbioru:'2024-10-30',notatki:''}
+        ]},
+      { id:uid(), nazwa:'Przy lesie', powierzchnia_ha:8.1, lokalizacja:'północny skraj, gleba lżejsza IV kl.',
+        komentarz:'Sarny podchodzą od lasu — warto grodzić młode zasiewy.',
+        geo:{polygon:[[52.3012,17.2090],[52.3012,17.2140],[52.2986,17.2140],[52.2986,17.2090]]},
+        sezony:[
+          {rok:2026,uprawa:'Jęczmień jary',odmiana:'Radek',data_siewu:'2026-03-30',norma_wysiewu:'170 kg/ha',
+           zabiegi:[{data:'2026-04-20',rodzaj:'nawoz',srodek:'Polifoska 6',dawka:'200',jednostka:'kg/ha',koszt:'640'}],
+           plon_t:'',plon_t_ha:'',wilgotnosc:'',data_zbioru:'',notatki:''},
+          {rok:2025,uprawa:'Ziemniaki',odmiana:'Denar',data_siewu:'2025-04-15',norma_wysiewu:'2,5 t/ha',
+           zabiegi:[{data:'2025-06-01',rodzaj:'fungicyd',srodek:'Ridomil Gold MZ',dawka:'2,5',jednostka:'kg/ha',koszt:'300'},
+             {data:'2025-06-20',rodzaj:'insektycyd',srodek:'Mospilan 20 SP',dawka:'0,08',jednostka:'kg/ha',koszt:'85'}],
+           plon_t:'243',plon_t_ha:'30.0',wilgotnosc:'',data_zbioru:'2025-09-18',notatki:'Ładne bulwy, mało zarazy.'}
+        ]},
+      { id:uid(), nazwa:'Duże pole', powierzchnia_ha:21.7, lokalizacja:'za drogą, gleba II-III kl.',
+        komentarz:'Najlepsza ziemia w gospodarstwie. Równy areał, dobry dojazd kombajnu.',
+        geo:{polygon:[[52.2978,17.2000],[52.2978,17.2112],[52.2944,17.2112],[52.2944,17.2000]]},
+        sezony:[
+          {rok:2026,uprawa:'Rzepak ozimy',odmiana:'LG Ambassador',data_siewu:'2025-08-22',norma_wysiewu:'45 szt/m²',
+           zabiegi:[{data:'2025-09-05',rodzaj:'herbicyd',srodek:'Butisan Star 416 SC',dawka:'2,2',jednostka:'l/ha',koszt:'1240'},
+             {data:'2025-09-28',rodzaj:'regulator',srodek:'Toprex 375 SC',dawka:'0,35',jednostka:'l/ha',koszt:'380'}],
+           plon_t:'',plon_t_ha:'',wilgotnosc:'',data_zbioru:'',notatki:''},
+          {rok:2025,uprawa:'Pszenica ozima',odmiana:'Euforia',data_siewu:'2024-10-02',norma_wysiewu:'190 kg/ha',
+           zabiegi:[{data:'2025-03-25',rodzaj:'nawoz',srodek:'Saletrzak',dawka:'300',jednostka:'kg/ha',koszt:'1560'},
+             {data:'2025-05-12',rodzaj:'fungicyd',srodek:'Elatus Era',dawka:'0,8',jednostka:'l/ha',koszt:'720'}],
+           plon_t:'167.1',plon_t_ha:'7.7',wilgotnosc:'13',data_zbioru:'2025-08-02',notatki:''},
+          {rok:2024,uprawa:'Jęczmień ozimy',odmiana:'KWS Higgins',data_siewu:'2023-09-25',norma_wysiewu:'160 kg/ha',
+           zabiegi:[],plon_t:'156.2',plon_t_ha:'7.2',wilgotnosc:'',data_zbioru:'2024-07-10',notatki:''}
+        ]}
+    ],
+    machines:[
+      { id:uid(), nazwa:'John Deere 6120M', typ:'Ciągnik', marka:'John Deere', model:'6120M', rok:2019, nr_rej:'PO 4521K', mth:'4820', notatki:'Główny ciągnik do uprawy i siewu.',
+        przeglady:[
+          {data:'2026-03-10',rodzaj:'olejowy',mth:'4750',opis:'Wymiana oleju silnikowego + filtry',koszt:'1200'},
+          {data:'2025-09-02',rodzaj:'techniczny',mth:'4380',opis:'Przegląd okresowy, hamulce OK',koszt:'650'}
+        ]},
+      { id:uid(), nazwa:'Claas Arion 530', typ:'Ciągnik', marka:'Claas', model:'Arion 530', rok:2016, nr_rej:'PO 8830J', mth:'6210', notatki:'',
+        przeglady:[{data:'2026-02-18',rodzaj:'olejowy',mth:'6100',opis:'Olej + filtr paliwa',koszt:'980'}]},
+      { id:uid(), nazwa:'Opryskiwacz Amazone UF 1201', typ:'Opryskiwacz', marka:'Amazone', model:'UF 1201', rok:2018, nr_rej:'', mth:'', notatki:'Kalibracja przed sezonem.',
+        przeglady:[]}
+    ],
+    finance:[
+      {id:uid(),data:'2026-03-05',kategoria:'ropa',opis:'Tankowanie ON — 800 l',kwota:'4800',typ:'koszt'},
+      {id:uid(),data:'2026-03-10',kategoria:'naprawy',opis:'Serwis olejowy JD 6120M',kwota:'1200',typ:'koszt'},
+      {id:uid(),data:'2026-04-05',kategoria:'zakupy',opis:'Saletra amonowa — 5 t',kwota:'11500',typ:'koszt'},
+      {id:uid(),data:'2026-04-18',kategoria:'opryski',opis:'ŚOR na rzepak',kwota:'2100',typ:'koszt'},
+      {id:uid(),data:'2026-05-20',kategoria:'ropa',opis:'Tankowanie ON — 500 l',kwota:'3050',typ:'koszt'},
+      {id:uid(),data:'2026-02-15',kategoria:'mleko',opis:'Sprzedaż mleka — luty',kwota:'18400',typ:'przychod'}
+    ],
+    cattle:[
+      { id:uid(), kolczyk:'PL005212340021', imie:'Mućka', plec:'krowa', rasa:'HF', data_urodzenia:'2021-03-14', status:'na stanie', matka:'', notatki:'Dobra mleczność.',
+        inseminacje:[{data:'2026-05-02',nasienie:'Byk Danillo (HF)',uwagi:'1. krycie'}],
+        wycielenia:[{data:'2025-01-20',cielak:'PL005212340088',uwagi:'jałówka, bez komplikacji'}]},
+      { id:uid(), kolczyk:'PL005212340034', imie:'Łatka', plec:'krowa', rasa:'HF', data_urodzenia:'2020-06-01', status:'na stanie', matka:'', notatki:'',
+        inseminacje:[{data:'2026-06-10',nasienie:'Byk Fantom (HF)',uwagi:''}], wycielenia:[]},
+      { id:uid(), kolczyk:'PL005212340088', imie:'', plec:'jałówka', rasa:'HF', data_urodzenia:'2025-01-20', status:'na stanie', matka:'PL005212340021', notatki:'Cielę po Mućce.',
+        inseminacje:[], wycielenia:[]}
+    ]
+  };
+}
+
+/* =========================================================
+   Nawigacja / render
+   ========================================================= */
+function go(name, fieldId){ view.module='pola'; view.name=name; if(fieldId!==undefined) view.fieldId=fieldId; render(); window.scrollTo(0,0); }
+function goModule(m){
+  view.module=m;
+  if(m==='pola' && !['pola','sezon'].includes(view.name)) view.name='sezon';
+  if(m==='flota') view.machineId=null;
+  if(m==='bydlo') view.cattleId=null;
+  render(); window.scrollTo(0,0);
+}
+function setFarmName(v){ state.farm.nazwa=v.trim()||'Gospodarstwo'; save(); }
+function totalHa(){ return state.fields.reduce((s,f)=>s+(parseFloat(f.powierzchnia_ha)||0),0); }
+function seasonOf(field,rok){ return field.sezony.find(s=>s.rok===rok); }
+function latestSeason(field){ return field.sezony.slice().sort((a,b)=>b.rok-a.rok)[0]; }
+function fieldsWithGeo(){ return state.fields.filter(f=>f.geo&&f.geo.polygon&&f.geo.polygon.length>=3); }
+function allYears(){ const s=new Set(); state.fields.forEach(f=>f.sezony.forEach(z=>s.add(z.rok))); s.add(view.year); return [...s].sort((a,b)=>b-a); }
+
+/* =========================================================
+   LOGOWANIE (lokalna bramka — Etap 1)
+   ========================================================= */
+const AUTHKEY='mfarmx.auth', SESSKEY='mfarmx.session';
+let auth = JSON.parse(localStorage.getItem(AUTHKEY)||'null');
+let authed = false;
+(function(){ const tok=localStorage.getItem(SESSKEY)||sessionStorage.getItem(SESSKEY); if(auth&&tok&&tok===auth.hash) authed=true; })();
+
+function hashPwd(s,salt){
+  const str='mfx:'+(salt||'')+':'+(s||'');
+  let h=5381, h2=52711;
+  for(let i=0;i<str.length;i++){ h=((h<<5)+h+str.charCodeAt(i))>>>0; }
+  for(let i=str.length-1;i>=0;i--){ h2=((h2<<5)+h2+str.charCodeAt(i))>>>0; }
+  return (h>>>0).toString(16).padStart(8,'0')+(h2>>>0).toString(16).padStart(8,'0');
+}
+function boot(){
+  if(!auth) return renderOnboarding();
+  if(!authed) return renderLogin();
+  render();
+}
+function authScreen(inner){
+  return `<div class="auth-wrap">
+    <div class="auth-side">
+      <div class="auth-brand"><span class="mark">M</span>M-FarmX</div>
+      <div class="auth-tagline">System zarządzania gospodarstwem</div>
+      <ul class="auth-feats">
+        <li>${icon('wheat',18)} Pola, płodozmian i plony</li>
+        <li>${icon('tractor',18)} Flota i przeglądy maszyn</li>
+        <li>${icon('coin',18)} Finanse miesiąc po miesiącu</li>
+        <li>${icon('cow',18)} Stado, inseminacje i wycielenia</li>
+      </ul>
+    </div>
+    <div class="auth-panel"><div class="auth-card">${inner}</div></div>
+  </div>`;
+}
+function renderOnboarding(){
+  document.getElementById('app').innerHTML=authScreen(`
+    <h2>Witaj w M-FarmX</h2>
+    <p class="auth-sub">Utwórz konto, aby zabezpieczyć dostęp do danych gospodarstwa.</p>
+    <div class="field"><label>Login</label><input id="ob_user" placeholder="np. rolnik" autofocus></div>
+    <div class="field"><label>Hasło</label><input id="ob_pass" type="password" placeholder="min. 4 znaki"></div>
+    <div class="field"><label>Powtórz hasło</label><input id="ob_pass2" type="password" onkeydown="if(event.key==='Enter')doOnboard()"></div>
+    <button class="btn primary auth-btn" onclick="doOnboard()">Utwórz konto i wejdź</button>
+    <div id="auth_err" class="auth-err"></div>
+    <div class="auth-note">Konto zapisywane jest lokalnie w tej przeglądarce.<br>Dane gospodarstwa i hasło trzymane są osobno.</div>
+  `);
+}
+function doOnboard(){
+  const u=val('ob_user').trim(), p=val('ob_pass'), p2=val('ob_pass2');
+  const err=document.getElementById('auth_err');
+  if(u.length<3){ err.textContent='Login musi mieć min. 3 znaki.'; return; }
+  if(p.length<4){ err.textContent='Hasło musi mieć min. 4 znaki.'; return; }
+  if(p!==p2){ err.textContent='Hasła nie są takie same.'; return; }
+  const salt=Math.random().toString(36).slice(2,12);
+  auth={user:u,salt,hash:hashPwd(p,salt),created:new Date().toISOString()};
+  localStorage.setItem(AUTHKEY,JSON.stringify(auth));
+  authed=true; localStorage.setItem(SESSKEY,auth.hash);
+  render();
+}
+function renderLogin(){
+  document.getElementById('app').innerHTML=authScreen(`
+    <h2>Zaloguj się</h2>
+    <p class="auth-sub">Dostęp do danych gospodarstwa.</p>
+    <div class="field"><label>Login</label><input id="lg_user" value="${esc(auth.user||'')}"></div>
+    <div class="field"><label>Hasło</label><input id="lg_pass" type="password" autofocus onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <label class="auth-remember"><input type="checkbox" id="lg_remember" checked> Zapamiętaj mnie na tym urządzeniu</label>
+    <button class="btn primary auth-btn" onclick="doLogin()">Zaloguj się</button>
+    <div id="auth_err" class="auth-err"></div>
+  `);
+}
+function doLogin(){
+  const u=val('lg_user').trim(), p=val('lg_pass');
+  const err=document.getElementById('auth_err');
+  if(u!==auth.user || hashPwd(p,auth.salt)!==auth.hash){ err.textContent='Nieprawidłowy login lub hasło.'; return; }
+  authed=true;
+  localStorage.removeItem(SESSKEY); sessionStorage.removeItem(SESSKEY);
+  (document.getElementById('lg_remember').checked?localStorage:sessionStorage).setItem(SESSKEY,auth.hash);
+  render();
+}
+function logout(){
+  if(!confirm('Wylogować się z M-FarmX?')) return;
+  authed=false; localStorage.removeItem(SESSKEY); sessionStorage.removeItem(SESSKEY);
+  renderLogin();
+}
+
+function render(){
+  // sprzątanie map przy zmianie widoku
+  if(view.module!=='pulpit' && LMAP){ try{LMAP.remove();}catch(e){} LMAP=null; }
+  if(!(view.module==='pola'&&view.name==='nowePole') && CMAP){ try{CMAP.remove();}catch(e){} CMAP=null; }
+
+  let content='';
+  if(view.module==='pulpit') content=renderPulpitModule();
+  else if(view.module==='pola') content=renderPolaModule();
+  else if(view.module==='flota') content=renderFlotaModule();
+  else if(view.module==='finanse') content=renderFinanseModule();
+  else if(view.module==='bydlo') content=renderBydloModule();
+
+  document.getElementById('app').innerHTML=`${renderNavbar()}<div class="layout${view.sidebarCollapsed?' collapsed':''}">${renderSidebar()}<main class="content">${content}</main></div>`;
+
+  if(view.module==='pulpit') setTimeout(initMap,30);
+  else if(view.module==='pola'){
+    if(view.name==='detail') setTimeout(initMiniMap,0);
+    else if(view.name==='nowePole') setTimeout(initCreateMap,30);
+  }
+}
+
+function renderSidebar(){
+  const item=(m,ic,lbl,count)=>`<button class="sb-item ${view.module===m?'active':''}" onclick="goModule('${m}')">
+    <span class="ic">${ic}</span><span class="lbl">${lbl}</span>${count!=null?`<span class="sb-count">${count}</span>`:''}</button>`;
+  const naStanie=state.cattle.filter(c=>c.status==='na stanie').length;
+  return `<aside class="sidebar">
+    <div class="sb-brand" onclick="goModule('pulpit')" title="M-FarmX"><span class="glyph">M-FarmX</span><span class="tag">gospodarstwo</span></div>
+    <nav class="sb-nav">
+      ${item('pulpit','📊','Pulpit',null)}
+      ${item('pola','🌾','Pola',state.fields.length)}
+      ${item('flota','🚜','Flota',state.machines.length)}
+      ${item('finanse','💰','Finanse',null)}
+      ${item('bydlo','🐄','Bydło',naStanie)}
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-farm-lbl">Gospodarstwo</div>
+      <input class="sb-farm" value="${esc(state.farm.nazwa||'')}" onchange="setFarmName(this.value)" spellcheck="false">
+      <div class="sb-backup">
+        <button class="btn small" style="flex:1;justify-content:center" onclick="exportData()">Kopia</button>
+        <button class="btn small" style="flex:1;justify-content:center" onclick="document.getElementById('importFile').click()">Wczytaj</button>
+      </div>
+      <div class="sb-saved" id="savedNote"></div>
+    </div>
+  </aside>`;
+}
+
+/* ===== Górny navbar + ikony + pulpit ===== */
+function icon(n,s=18){
+  const p={
+    menu:'<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
+    calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+    ruler:'<path d="M3 8l13 13 5-5L8 3z"/><path d="M8 8l1 1M11 11l1 1M14 14l1 1"/>',
+    tractor:'<circle cx="7" cy="17" r="3"/><circle cx="18" cy="17" r="2"/><path d="M10 17h6M4 17V7h6l2 5h4v3"/>',
+    cow:'<path d="M5 8c0-2 2-3 4-3 1.5 0 2 1 3 1s1.5-1 3-1c2 0 4 1 4 3 0 2-1 2.5-1 4a6 6 0 0 1-12 0c0-1.5-1-2-1-4z"/><circle cx="10" cy="12" r=".8"/><circle cx="14" cy="12" r=".8"/>',
+    coin:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3H15"/>',
+    spray:'<path d="M4 21h6v-8H4zM10 13V6h3l6-3v14l-6-3z"/>',
+    wheat:'<path d="M12 3v18"/><path d="M12 8c-2-1.5-5-1.5-5-1.5S7 9.5 9 10.5 12 8 12 8zM12 8c2-1.5 5-1.5 5-1.5S17 9.5 15 10.5 12 8 12 8zM12 14c-2-1.5-5-1.5-5-1.5S7 15.5 9 16.5 12 14 12 14zM12 14c2-1.5 5-1.5 5-1.5S17 15.5 15 16.5 12 14 12 14z"/>',
+    logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'
+  }[n]||'';
+  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">${p}</svg>`;
+}
+function renderNavbar(){
+  const years=allYears();
+  const yopts=years.map(y=>`<option value="${y}" ${y===view.year?'selected':''}>Sezon ${y}</option>`).join('');
+  const uname=(auth&&auth.user)||state.farm.nazwa||'Gospodarstwo';
+  const initials=((uname||'G').trim()[0]||'G').toUpperCase();
+  const pend=feedPending();
+  return `<div class="navbar">
+    <button class="nav-burger" onclick="toggleSidebar()" title="Menu">${icon('menu',20)}</button>
+    <div class="nav-logo" onclick="goModule('pulpit')"><span class="mark">M</span>M-FarmX <span class="tag">Operations</span></div>
+    <div class="nav-spacer"></div>
+    <div class="nav-season" title="Sezon">${icon('calendar',15)}<select onchange="view.year=+this.value;render()">${yopts}</select></div>
+    <button class="nav-icon" title="Powiadomienia" onclick="notifyInfo()">${icon('bell',19)}${pend>0?`<span class="nav-badge">${pend}</span>`:''}</button>
+    <div class="nav-user" title="${esc(uname)}"><div class="nav-avatar">${esc(initials)}</div>
+      <div><div class="nu-name">${esc(uname)}</div><div class="nu-role">Administrator</div></div></div>
+    <button class="nav-icon" title="Wyloguj" onclick="logout()">${icon('logout',18)}</button>
+  </div>`;
+}
+function toggleSidebar(){ view.sidebarCollapsed=!view.sidebarCollapsed; render(); }
+function notifyInfo(){ alert('Powiadomienia — wkrótce. Nadchodzące zdarzenia (opryski, wycielenia, przeglądy) widać w kanale aktywności na pulpicie.'); }
+
+function renderStatStrip(){
+  const naStanie=state.cattle.filter(c=>c.status==='na stanie').length;
+  const cards=[
+    ['wheat',state.fields.length,'Pola',"go('pola')"],
+    ['ruler',totalHa().toFixed(1).replace('.',','),'Hektary',"go('pola')"],
+    ['tractor',state.machines.length,'Maszyny',"goModule('flota')"],
+    ['cow',naStanie,'Bydło na stanie',"goModule('bydlo')"],
+    ['calendar',view.year,'Sezon',"go('sezon')"]
+  ].map(([ic,num,lab,act])=>`<div class="stat-card" onclick="${act}" title="Przejdź do: ${lab}"><div class="stat-ic">${icon(ic,20)}</div>
+    <div><div class="stat-num">${num}</div><div class="stat-lab">${lab}</div></div></div>`).join('');
+  return `<div class="stat-strip">${cards}</div>`;
+}
+function aggregateActivity(){
+  const A=[]; const today=new Date().toISOString().slice(0,10);
+  state.fields.forEach(f=>(f.sezony||[]).forEach(s=>{
+    (s.zabiegi||[]).forEach(z=>A.push({date:z.data,ic:'spray',color:ZABIEG_KINDS[z.rodzaj]||'#5E7F54',title:z.srodek,sub:`${f.nazwa} · ${ZABIEG_LABEL[z.rodzaj]||'zabieg'}`}));
+    if(s.data_zbioru) A.push({date:s.data_zbioru,ic:'wheat',color:'#F0B13A',title:`Zbiór — ${s.uprawa||''}`,sub:`${f.nazwa}${s.plon_t_ha?` · ${fmt(s.plon_t_ha)} t/ha`:''}`});
+  }));
+  state.machines.forEach(m=>(m.przeglady||[]).forEach(p=>A.push({date:p.data,ic:'tractor',color:MACHINE_COLORS[m.typ]||'#5B8A93',title:PRZEGLAD_TYPES[p.rodzaj]||p.rodzaj,sub:m.nazwa})));
+  state.cattle.forEach(c=>{
+    (c.inseminacje||[]).forEach(x=>A.push({date:x.data,ic:'cow',color:'#5B8A93',title:'Inseminacja',sub:`${c.kolczyk||c.imie||''}`}));
+    (c.wycielenia||[]).forEach(x=>A.push({date:x.data,ic:'cow',color:'#F0B13A',title:'Wycielenie',sub:`${c.kolczyk||c.imie||''}`}));
+  });
+  state.finance.forEach(t=>{ const cat=FIN_CATEGORIES[t.kategoria]||FIN_CATEGORIES.inne;
+    A.push({date:t.data,ic:'coin',color:cat.color,title:`${t.typ==='przychod'?'+':'−'}${fmt(t.kwota)} zł`,sub:cat.label}); });
+  A.forEach(a=>{ a.date=a.date||''; a.status = !a.date ? 'plan' : (a.date>today?'plan':'done'); });
+  A.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  return A;
+}
+function feedPending(){ return aggregateActivity().filter(a=>a.status==='plan').length; }
+function renderActivityFeed(){
+  const A=aggregateActivity().slice(0,16);
+  const SB={done:['st-done','Wykonane'],plan:['st-plan','Zaplanowane']};
+  const items=A.length?A.map(a=>{
+    const [cls,lab]=SB[a.status]||SB.done;
+    return `<div class="feed-item">
+      <div class="feed-ic" style="background:${a.color}">${icon(a.ic,17)}</div>
+      <div class="feed-main"><div class="feed-title">${esc(a.title||'')}</div>
+        <div class="feed-sub">${esc(a.sub||'')}</div>
+        <div class="feed-date">${a.date?new Date(a.date).toLocaleDateString('pl-PL'):'—'}</div></div>
+      <span class="st-badge ${cls}">${lab}</span></div>`;
+  }).join(''):`<div class="z-empty" style="padding:16px">Brak aktywności. Dodaj zabiegi, przeglądy lub zdarzenia.</div>`;
+  return `<aside class="dash-feed"><div class="feed-head">Aktywność <span class="muted" style="font-size:12px;font-weight:400">ostatnie zdarzenia</span></div>${items}</aside>`;
+}
+
+/* ===== Moduł Pulpit (dashboard z mapą) ===== */
+function renderPulpitModule(){
+  return `<div class="module-head"><div><h1>Pulpit</h1><div class="sub">Precyzyjne rolnictwo — mapa pól i kanał aktywności</div></div></div>`
+    + renderStatStrip()
+    + `<div class="dash-grid"><div class="dash-map">${renderMapView()}</div>${renderActivityFeed()}</div>`;
+}
+
+/* ===== Moduł Pola (karty + Sezon) ===== */
+function renderPolaModule(){
+  if(view.name==='detail') return renderDetail();
+  if(view.name==='nowePole') return renderNewFieldView();
+  const head=`<div class="module-head"><div><h1>Pola</h1><div class="sub">Dziennik pól — płodozmian, zabiegi, plony</div></div>
+    <div class="spacer"></div>
+    <button class="btn primary" onclick="go('nowePole')">+ Dodaj pole</button></div>`;
+  return head+renderTabs()+(view.name==='pola'?renderFieldsView():renderSeasonView())+renderLegend();
+}
+
+function renderTabs(){
+  const years=allYears();
+  const opts=years.map(y=>`<option value="${y}" ${y===view.year?'selected':''}>${y}</option>`).join('');
+  return `<div class="tabs">
+    <button class="tab ${view.name==='pola'?'active':''}" onclick="go('pola')">Karty pól</button>
+    <button class="tab ${view.name==='sezon'?'active':''}" onclick="go('sezon')">Sezon ${view.year}</button>
+    ${view.name==='sezon'?`<div class="year-pick"><span class="muted" style="font-size:12px">rok:</span>
+      <select class="sel" onchange="view.year=+this.value;render()">${opts}</select></div>`:''}
+  </div>`;
+}
+
+/* =========================================================
+   MAPA
+   ========================================================= */
+function renderMapView(){
+  return `
+    ${drawTargetField ? `<div class="drawing-banner">✏️ Kliknij narożniki pola na mapie, na końcu kliknij pierwszy punkt, aby zamknąć obrys. <button class="btn small" onclick="cancelDrawTarget()">Anuluj</button></div>` : ''}
+    <div class="map-toolbar">
+      <input class="map-search" id="mapSearch" placeholder="🔍 Znajdź miejscowość (np. Poznań, Kórnik)…" onkeydown="if(event.key==='Enter')mapSearch(this.value)">
+      <button class="btn primary" onclick="go('nowePole')">✏️ Dodaj nowe pole</button>
+    </div>
+    <div id="map"></div>
+    <div class="map-hint">
+      <span>Kliknij pole, aby otworzyć jego dziennik.</span>
+      <span>Powierzchnię (ha) policzy się sama z narysowanego obrysu.</span>
+      <span>Przeciągnij narożniki, aby poprawić kształt.</span>
+    </div>`;
+}
+
+function initMap(){
+  const el=document.getElementById('map');
+  if(!el) return;
+  if(typeof L==='undefined'){
+    el.outerHTML=`<div class="map-off"><div style="font-size:19px;font-family:var(--serif);color:var(--ink)">Mapa wymaga internetu</div>
+      <div>Zdjęcia satelitarne pobierają się z sieci. Reszta dziennika (pola, sezony, plony) działa offline.</div></div>`;
+    return;
+  }
+  if(LMAP){ try{LMAP.remove();}catch(e){} LMAP=null; }
+  const ui=state.ui||(state.ui={});
+  LMAP=L.map(el,{zoomControl:true}).setView(ui.mapCenter||[52.03,19.3], ui.mapZoom||6);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    {maxZoom:19,maxNativeZoom:18,attribution:'Zdjęcia: Esri, Maxar, Earthstar Geographics'}).addTo(LMAP);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    {maxZoom:19,maxNativeZoom:18,opacity:.9}).addTo(LMAP);
+
+  drawnItems=new L.FeatureGroup().addTo(LMAP);
+  fieldsWithGeo().forEach((f,i)=>addFieldPolygon(f,i));
+
+  const drawControl=new L.Control.Draw({
+    position:'topright',
+    edit:{featureGroup:drawnItems, remove:false, edit:{selectedPathOptions:{maintainColor:true}}},
+    draw:{polygon:{allowIntersection:false,showArea:true,metric:true,shapeOptions:{color:'#C89B2C',weight:2,fillOpacity:.25}},
+          polyline:false,rectangle:false,circle:false,marker:false,circlemarker:false}
+  });
+  LMAP.addControl(drawControl);
+  LMAP.on(L.Draw.Event.CREATED, onDrawCreated);
+  LMAP.on(L.Draw.Event.EDITED, onDrawEdited);
+  LMAP.on('moveend',()=>{ const c=LMAP.getCenter(); ui.mapCenter=[c.lat,c.lng]; ui.mapZoom=LMAP.getZoom(); save(); });
+
+  // dopasuj widok
+  if(mapFocusFieldId){
+    const f=state.fields.find(x=>x.id===mapFocusFieldId);
+    if(f&&f.geo&&f.geo.polygon) LMAP.fitBounds(L.polygon(f.geo.polygon).getBounds().pad(0.6));
+    mapFocusFieldId=null;
+  }else if(!ui.mapCenter && fieldsWithGeo().length){
+    try{ LMAP.fitBounds(drawnItems.getBounds().pad(0.25)); }catch(e){}
+  }
+  if(drawTargetField){ new L.Draw.Polygon(LMAP, drawControl.options.draw.polygon).enable(); }
+  setTimeout(()=>{ if(LMAP) LMAP.invalidateSize(); },60);
+}
+
+function addFieldPolygon(f,i){
+  const last=latestSeason(f);
+  const fill=cropColor(last&&last.uprawa);
+  const border=FIELD_BORDER[(i||0)%FIELD_BORDER.length];
+  const poly=L.polygon(f.geo.polygon,{color:border,weight:2,opacity:1,fillColor:fill,fillOpacity:.3});
+  poly._fieldId=f.id;
+  poly.bindTooltip(`${esc(f.nazwa)} <small>· ${fmt(f.powierzchnia_ha)} ha</small>`,{permanent:true,direction:'center',className:'field-label'});
+  poly.on('mouseover',()=>poly.setStyle({weight:4,fillOpacity:.48}));
+  poly.on('mouseout',()=>poly.setStyle({weight:2,fillOpacity:.3}));
+  poly.on('click',()=>go('detail',f.id));
+  poly.addTo(drawnItems);
+}
+
+function startDrawNew(){
+  if(!LMAP){ alert('Mapa jeszcze się ładuje — spróbuj za chwilę.'); return; }
+  drawTargetField=null;
+  const dc=new L.Draw.Polygon(LMAP,{allowIntersection:false,showArea:true,metric:true,shapeOptions:{color:'#C89B2C',weight:2,fillOpacity:.25}});
+  dc.enable();
+}
+function cancelDrawTarget(){ drawTargetField=null; render(); }
+
+function onDrawCreated(e){
+  const latlngs=e.layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(7),+p.lng.toFixed(7)]);
+  const ha=polygonAreaHa(latlngs);
+  if(drawTargetField){
+    const f=state.fields.find(x=>x.id===drawTargetField);
+    f.geo={polygon:latlngs}; f.powierzchnia_ha=+ha.toFixed(2);
+    drawTargetField=null; save(); render();
+    return;
+  }
+  pendingGeo={polygon:latlngs};
+  openFieldForm(null, +ha.toFixed(2));
+}
+function onDrawEdited(e){
+  e.layers.eachLayer(layer=>{
+    if(!layer._fieldId) return;
+    const f=state.fields.find(x=>x.id===layer._fieldId);
+    if(!f) return;
+    const latlngs=layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(7),+p.lng.toFixed(7)]);
+    f.geo={polygon:latlngs}; f.powierzchnia_ha=+polygonAreaHa(latlngs).toFixed(2);
+  });
+  save();
+  // odśwież etykiety (powierzchnia mogła się zmienić)
+  document.getElementById('statHa').textContent=totalHa().toFixed(1).replace('.',',');
+}
+
+/* geodezyjne pole wielokąta -> ha */
+function polygonAreaHa(pts){
+  const R=6378137, d2r=Math.PI/180, n=pts.length;
+  if(n<3) return 0;
+  let area=0;
+  for(let i=0;i<n;i++){
+    const [la1,lo1]=pts[i], [la2,lo2]=pts[(i+1)%n];
+    area+=(lo2-lo1)*d2r*(2+Math.sin(la1*d2r)+Math.sin(la2*d2r));
+  }
+  return Math.abs(area*R*R/2)/10000;
+}
+
+async function mapSearch(q){
+  q=(q||'').trim(); if(!q||!LMAP) return;
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pl&q='+encodeURIComponent(q));
+    const d=await r.json();
+    if(d&&d[0]) LMAP.setView([+d[0].lat,+d[0].lon],15);
+    else alert('Nie znaleziono takiej miejscowości.');
+  }catch(e){ alert('Wyszukiwanie wymaga internetu.'); }
+}
+
+function initMiniMap(){
+  const el=document.getElementById('miniMap');
+  if(!el||typeof L==='undefined') return;
+  const f=state.fields.find(x=>x.id===view.fieldId);
+  if(!f||!f.geo||!f.geo.polygon) return;
+  const m=L.map(el,{zoomControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,attributionControl:false});
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19}).addTo(m);
+  const last=latestSeason(f), col=cropColor(last&&last.uprawa);
+  const poly=L.polygon(f.geo.polygon,{color:col,weight:2,fillColor:col,fillOpacity:.4}).addTo(m);
+  m.fitBounds(poly.getBounds().pad(0.4));
+  setTimeout(()=>m.invalidateSize(),60);
+}
+
+/* =========================================================
+   Ekran „Nowe pole" — najpierw obrys na mapie, potem opis
+   ========================================================= */
+function renderNewFieldView(){
+  const area = newFieldGeo ? polygonAreaHa(newFieldGeo.polygon) : null;
+  const chip = area!=null ? `✓ Obrys zapisany · <b class="num">${fmt(area.toFixed(2))} ha</b>` : 'Kliknij „Narysuj obrys" i klikaj narożniki działki. Zamknij obrys, klikając pierwszy punkt.';
+  return `
+    <button class="btn ghost small" onclick="cancelNewField()" style="margin-bottom:14px">← Anuluj</button>
+    <h1 style="font-family:var(--serif);font-size:30px;margin:0 0 4px">Nowe pole</h1>
+    <p class="muted" style="margin:0 0 18px">Obrysuj działkę na zdjęciu satelitarnym, potem nadaj jej nazwę i komentarz.</p>
+    <div class="create-grid">
+      <div>
+        <div class="map-toolbar">
+          <input class="map-search" id="cMapSearch" placeholder="🔍 Znajdź miejscowość…" onkeydown="if(event.key==='Enter')createSearch(this.value)">
+          <button class="btn primary" onclick="createStartDraw()">✏️ Narysuj obrys</button>
+          <button class="btn" onclick="createClear()">Wyczyść</button>
+        </div>
+        <div id="createMap"></div>
+        <div class="map-hint"><span id="areaChip">${chip}</span></div>
+      </div>
+      <div class="create-form">
+        <div class="field"><label>Nazwa działki</label><input id="nf_nazwa" placeholder="np. Za stodołą" autofocus></div>
+        <div class="field"><label>Powierzchnia (ha)</label><input id="nf_ha" inputmode="decimal" value="${area!=null?area.toFixed(2).replace('.',','):''}" placeholder="policzy się z obrysu">
+          <div class="hint">Wypełnia się automatycznie po narysowaniu obrysu — możesz poprawić ręcznie.</div></div>
+        <div class="field"><label>Lokalizacja / gleba</label><input id="nf_lok" placeholder="np. przy lesie, gleba IV kl."></div>
+        <div class="field"><label>Komentarz</label><textarea id="nf_kom" placeholder="uwagi o działce: dojazd, kamienie, zastoiska wody, zwierzyna…"></textarea></div>
+        <button class="btn primary" style="width:100%;justify-content:center" onclick="saveNewField()">Zapisz pole</button>
+      </div>
+    </div>`;
+}
+
+function initCreateMap(){
+  const el=document.getElementById('createMap'); if(!el) return;
+  if(typeof L==='undefined'){
+    el.outerHTML=`<div class="map-off"><div style="font-size:19px;font-family:var(--serif);color:var(--ink)">Mapa wymaga internetu</div>
+      <div>Bez sieci możesz zapisać pole bez obrysu — powierzchnię wpisz ręcznie.</div></div>`;
+    return;
+  }
+  if(CMAP){ try{CMAP.remove();}catch(e){} CMAP=null; }
+  const ui=state.ui||(state.ui={});
+  CMAP=L.map(el,{zoomControl:true}).setView(ui.mapCenter||[52.03,19.3], ui.mapZoom||6);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    {maxZoom:19,maxNativeZoom:18,attribution:'Zdjęcia: Esri'}).addTo(CMAP);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    {maxZoom:19,maxNativeZoom:18,opacity:.9}).addTo(CMAP);
+  // istniejące pola jako lekkie tło (dla orientacji)
+  fieldsWithGeo().forEach(f=>{ L.polygon(f.geo.polygon,{color:'#6b6b6b',weight:1,fillOpacity:.08,interactive:false,dashArray:'4'}).addTo(CMAP); });
+  createDrawn=new L.FeatureGroup().addTo(CMAP);
+  if(newFieldGeo){
+    const p=L.polygon(newFieldGeo.polygon,{color:'#C89B2C',weight:2,fillOpacity:.3}).addTo(createDrawn);
+    CMAP.fitBounds(p.getBounds().pad(0.5));
+  }else if(fieldsWithGeo().length){
+    try{ CMAP.fitBounds(L.featureGroup(fieldsWithGeo().map(f=>L.polygon(f.geo.polygon))).getBounds().pad(0.3)); }catch(e){}
+  }
+  CMAP.on(L.Draw.Event.CREATED,e=>{
+    createDrawn.clearLayers();
+    if(e.layer.setStyle) e.layer.setStyle({color:'#C89B2C',weight:2,fillOpacity:.3});
+    e.layer.addTo(createDrawn);
+    const ll=e.layer.getLatLngs()[0].map(p=>[+p.lat.toFixed(7),+p.lng.toFixed(7)]);
+    onCreateDrawn(ll);
+  });
+  setTimeout(()=>{ if(CMAP) CMAP.invalidateSize(); },60);
+  if(!newFieldGeo) setTimeout(createStartDraw,250);
+}
+function createStartDraw(){
+  if(!CMAP) return;
+  createDrawn.clearLayers(); newFieldGeo=null;
+  new L.Draw.Polygon(CMAP,{allowIntersection:false,showArea:true,metric:true,shapeOptions:{color:'#C89B2C',weight:2,fillOpacity:.25}}).enable();
+}
+function createClear(){
+  if(createDrawn) createDrawn.clearLayers();
+  newFieldGeo=null;
+  const c=document.getElementById('areaChip'); if(c) c.textContent='Kliknij „Narysuj obrys" i klikaj narożniki działki.';
+  const h=document.getElementById('nf_ha'); if(h) h.value='';
+}
+function onCreateDrawn(latlngs){
+  newFieldGeo={polygon:latlngs};
+  const ha=polygonAreaHa(latlngs);
+  const c=document.getElementById('areaChip'); if(c) c.innerHTML=`✓ Obrys zapisany · <b class="num">${fmt(ha.toFixed(2))} ha</b>`;
+  const h=document.getElementById('nf_ha'); if(h) h.value=ha.toFixed(2).replace('.',',');
+}
+async function createSearch(q){
+  q=(q||'').trim(); if(!q||!CMAP) return;
+  try{
+    const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pl&q='+encodeURIComponent(q));
+    const d=await r.json();
+    if(d&&d[0]) CMAP.setView([+d[0].lat,+d[0].lon],15); else alert('Nie znaleziono takiej miejscowości.');
+  }catch(e){ alert('Wyszukiwanie wymaga internetu.'); }
+}
+function saveNewField(){
+  const nazwa=val('nf_nazwa').trim();
+  if(!nazwa){ alert('Podaj nazwę działki.'); document.getElementById('nf_nazwa')?.focus(); return; }
+  const nf={id:uid(),nazwa,powierzchnia_ha:num(val('nf_ha')),lokalizacja:val('nf_lok').trim(),komentarz:val('nf_kom').trim(),sezony:[]};
+  if(newFieldGeo) nf.geo=newFieldGeo;
+  state.fields.push(nf);
+  newFieldGeo=null; if(CMAP){ try{CMAP.remove();}catch(e){} CMAP=null; }
+  save(); go('detail', nf.id);
+}
+function cancelNewField(){
+  newFieldGeo=null; if(CMAP){ try{CMAP.remove();}catch(e){} CMAP=null; }
+  go('pola');
+}
+
+/* =========================================================
+   Widok Pola
+   ========================================================= */
+function renderFieldsView(){
+  if(!state.fields.length){
+    return `<div class="empty-state"><div class="big">Zacznij od pierwszego pola</div>
+      <div style="margin-bottom:18px">Obrysuj działkę na mapie, nadaj jej nazwę i komentarz.</div>
+      <button class="btn primary" onclick="go('nowePole')">✏️ Dodaj pierwsze pole</button></div>`;
+  }
+  const cards=state.fields.map(f=>{
+    const last=latestSeason(f);
+    const y=last&&last.plon_t_ha?`<span class="fc-yield">plon ${last.rok}: <b class="num">${fmt(last.plon_t_ha)} t/ha</b></span>`
+                                :`<span class="fc-yield muted">brak zebranego plonu</span>`;
+    const cur=last?`<span class="badge"><span class="dot" style="background:${cropColor(last.uprawa)}"></span>${esc(last.uprawa||'—')}</span>`:'<span class="muted">—</span>';
+    const geo=f.geo&&f.geo.polygon?`<div class="fc-geo">◈ zaznaczone na mapie</div>`:`<div class="fc-geo muted">bez obrysu na mapie</div>`;
+    const kom=f.komentarz?`<div class="fc-kom">„${esc(f.komentarz)}”</div>`:'';
+    return `<div class="field-card" onclick="go('detail','${f.id}')">
+      <div class="fc-head">
+        <div><h3 class="fc-name">${esc(f.nazwa)}</h3><div class="fc-loc">${esc(f.lokalizacja||'')}</div>${geo}${kom}</div>
+        <div class="fc-area"><b class="num">${fmt(f.powierzchnia_ha)}</b><span>ha</span></div>
+      </div>
+      ${ribbon(f)}
+      <div class="fc-foot">${cur}${y}</div>
+    </div>`;
+  }).join('');
+  return `<div class="grid">${cards}
+    <div class="add-card" onclick="go('nowePole')"><div class="plus">+</div><div>Dodaj pole</div></div>
+  </div>`;
+}
+function ribbon(f){
+  const years=f.sezony.map(s=>s.rok);
+  const maxY=Math.max(view.year, ...(years.length?years:[view.year]));
+  const list=[]; for(let y=maxY-5;y<=maxY;y++) list.push(y);
+  const segs=list.map(y=>{
+    const s=seasonOf(f,y);
+    if(!s) return `<div class="ribbon-seg empty"><span class="yr">${String(y).slice(2)}</span></div>`;
+    const col=cropColor(s.uprawa);
+    return `<div class="ribbon-seg" style="background:${col}" title="${y}: ${esc(s.uprawa||'')}">
+      <span class="ribbon-crop">${shortCrop(s.uprawa)}</span><span class="yr">${String(y).slice(2)}</span></div>`;
+  }).join('');
+  return `<div class="ribbon"><div class="ribbon-label">Płodozmian · ${list[0]}–${list[list.length-1]}</div>
+    <div class="ribbon-track">${segs}</div></div>`;
+}
+function shortCrop(c){
+  if(!c) return '';
+  const map={'Pszenica ozima':'Psz. oz.','Pszenica jara':'Psz. jara','Rzepak ozimy':'Rzepak','Rzepak':'Rzepak',
+    'Kukurydza na ziarno':'Kukur.','Kukurydza na kiszonkę':'Kukur. kisz','Jęczmień ozimy':'Jęcz. oz.','Jęczmień jary':'Jęcz. jary',
+    'Buraki cukrowe':'Buraki','Ziemniaki':'Ziemn.'};
+  return map[c]||c;
+}
+
+/* =========================================================
+   Widok Sezon
+   ========================================================= */
+function renderSeasonView(){
+  const rows=state.fields.map(f=>{
+    const s=seasonOf(f,view.year);
+    if(!s){
+      return `<tr data-field onclick="go('detail','${f.id}')">
+        <td><b>${esc(f.nazwa)}</b><div class="muted" style="font-size:12px">${fmt(f.powierzchnia_ha)} ha</div></td>
+        <td class="muted" colspan="4" style="font-style:italic">— brak uprawy na ${view.year} —</td>
+        <td><button class="btn small primary" onclick="event.stopPropagation();openSeasonForm('${f.id}')">+ Dodaj uprawę</button></td></tr>`;
+    }
+    const zab=s.zabiegi||[];
+    const zabHtml=zab.length?zab.map(z=>`<span class="badge" style="font-size:11px;padding:2px 7px;margin:1px 2px 1px 0">
+        <span class="dot" style="width:8px;height:8px;background:${ZABIEG_KINDS[z.rodzaj]||'#888'}"></span>${esc(z.srodek)} <span class="num muted">${esc(z.dawka)} ${esc(z.jednostka)}</span></span>`).join('')
+      :'<span class="muted">—</span>';
+    const plon=s.plon_t_ha?`<b class="num">${fmt(s.plon_t_ha)}</b> t/ha`:'<span class="muted">jeszcze rośnie</span>';
+    return `<tr data-field onclick="go('detail','${f.id}')">
+      <td><b>${esc(f.nazwa)}</b><div class="muted" style="font-size:12px">${fmt(f.powierzchnia_ha)} ha</div></td>
+      <td><span class="badge"><span class="dot" style="background:${cropColor(s.uprawa)}"></span>${esc(s.uprawa||'—')}</span>
+          ${s.odmiana?`<div class="muted" style="font-size:12px;margin-top:3px">${esc(s.odmiana)}</div>`:''}</td>
+      <td class="num">${esc(s.data_siewu||'—')}</td>
+      <td style="max-width:340px">${zabHtml}</td>
+      <td>${plon}</td>
+      <td style="white-space:nowrap">
+        <button class="btn small" onclick="event.stopPropagation();openZabiegForm('${f.id}',${s.rok})" title="Dodaj oprysk / nawożenie">+ Oprysk</button>
+        <button class="btn small" onclick="event.stopPropagation();openPlonForm('${f.id}',${s.rok})" title="Zapisz plon">Plon</button>
+      </td>
+    </tr>`;
+  }).join('');
+  return `<div class="season-wrap"><table class="season-table">
+    <thead><tr><th>Pole</th><th>Uprawa</th><th>Siew</th><th>Zabiegi ŚOR / nawożenie</th><th>Plon</th><th>Dodaj</th></tr></thead>
+    <tbody>${rows||`<tr><td colspan="6" class="muted">Brak pól. Dodaj pierwsze pole na zakładce Pola.</td></tr>`}</tbody></table></div>`;
+}
+
+/* =========================================================
+   Detal pola
+   ========================================================= */
+function renderDetail(){
+  const f=state.fields.find(x=>x.id===view.fieldId);
+  if(!f){ view.name='pola'; return renderFieldsView(); }
+  const seasons=f.sezony.slice().sort((a,b)=>b.rok-a.rok);
+  const body=seasons.length?seasons.map(s=>renderSeason(f,s)).join(''):
+    `<div class="empty-state"><div class="big">Brak sezonów</div><div style="margin-bottom:16px">Dodaj pierwszy rok uprawy dla tego pola.</div>
+     <button class="btn primary" onclick="openSeasonForm('${f.id}')">+ Dodaj sezon</button></div>`;
+  const hasGeo=f.geo&&f.geo.polygon;
+  const mapBtn=hasGeo?`<button class="btn small" onclick="focusOnMap('${f.id}')">Pokaż na mapie</button>`
+                     :`<button class="btn small" onclick="drawBoundaryFor('${f.id}')">✏️ Zaznacz na mapie</button>`;
+  return `
+    <button class="btn ghost small" onclick="go('pola')" style="margin-bottom:14px">← Wszystkie pola</button>
+    <div class="detail-head">
+      <div>
+        <h1>${esc(f.nazwa)}</h1>
+        <div class="detail-meta">
+          <div><span>Powierzchnia</span><b class="num">${fmt(f.powierzchnia_ha)} ha</b></div>
+          <div><span>Sezonów w dzienniku</span><b class="num">${f.sezony.length}</b></div>
+          ${f.lokalizacja?`<div style="max-width:280px"><span>Lokalizacja / gleba</span><b style="font-family:var(--sans);font-size:14px;color:var(--ink)">${esc(f.lokalizacja)}</b></div>`:''}
+        </div>
+      </div>
+      <div class="detail-actions">
+        ${mapBtn}
+        <button class="btn small" onclick="openFieldForm('${f.id}')">Edytuj pole</button>
+        <button class="btn small primary" onclick="openSeasonForm('${f.id}')">+ Dodaj sezon</button>
+      </div>
+    </div>
+    ${f.komentarz?`<div class="geo-note" style="background:rgba(200,155,44,.12);border-color:rgba(200,155,44,.35);color:var(--ink);margin-bottom:20px">📝 ${esc(f.komentarz)}</div>`:''}
+    ${hasGeo?`<div id="miniMap" class="mini-map"></div>`:''}
+    ${body}`;
+}
+function focusOnMap(id){ mapFocusFieldId=id; goModule('pulpit'); }
+function drawBoundaryFor(id){ drawTargetField=id; goModule('pulpit'); }
+
+function renderSeason(f,s){
+  const col=cropColor(s.uprawa);
+  const zab=(s.zabiegi||[]).slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  const zabHtml=zab.length?`<div class="zabieg-list">`+zab.map(z=>`
+      <div class="zabieg">
+        <div class="z-kind" style="background:${ZABIEG_KINDS[z.rodzaj]||'#888'}"></div>
+        <div class="z-main"><div class="z-name">${esc(z.srodek)}</div>
+          <div class="z-sub">${ZABIEG_LABEL[z.rodzaj]||z.rodzaj} · ${esc(z.data||'brak daty')}</div></div>
+        <div class="z-dose">${esc(z.dawka)} ${esc(z.jednostka)}${z.koszt?`<small>${fmt(z.koszt)} zł</small>`:''}</div>
+        <button class="x" title="Usuń zabieg" onclick="delZabieg('${f.id}',${s.rok},${(s.zabiegi||[]).indexOf(z)})">×</button>
+      </div>`).join('')+`</div>`
+    :`<div class="z-empty">Brak zapisanych zabiegów.</div>`;
+  const kosztSum=zab.reduce((a,z)=>a+(parseFloat(String(z.koszt||'').replace(',','.'))||0),0);
+  const ha=parseFloat(f.powierzchnia_ha)||0;
+  const costLine=kosztSum>0?`<div class="cost-line"><span>Koszt ŚOR / nawożenia w sezonie</span>
+    <b>${fmt(kosztSum)} zł${ha>0?` · ${fmt(kosztSum/ha)} zł/ha`:''}</b></div>`:'';
+  const plonBox=(s.plon_t_ha||s.plon_t)
+    ?`<div class="kv"><span>Plon łącznie</span><b>${fmt(s.plon_t)} t</b></div>
+      <div class="kv"><span>Plon z hektara</span><b style="color:var(--pole-dark)">${fmt(s.plon_t_ha)} t/ha</b></div>
+      ${s.wilgotnosc?`<div class="kv"><span>Wilgotność</span><b>${fmt(s.wilgotnosc)} %</b></div>`:''}
+      ${s.data_zbioru?`<div class="kv"><span>Data zbioru</span><b>${esc(s.data_zbioru)}</b></div>`:''}`
+    :`<div class="z-empty">Plon jeszcze niezapisany.</div>`;
+  return `<div class="season" id="s-${f.id}-${s.rok}">
+    <div class="season-bar" style="background:${col}"></div>
+    <div class="season-top" onclick="toggleSeason('${f.id}',${s.rok})">
+      <span class="season-year">${s.rok}</span>
+      <span class="dot" style="width:12px;height:12px;border-radius:3px;background:${col}"></span>
+      <span class="season-crop">${esc(s.uprawa||'—')}</span>
+      ${s.odmiana?`<span class="season-odm">${esc(s.odmiana)}</span>`:''}
+      <div class="season-quick">
+        <div class="q"><b class="num">${zab.length}</b><span>zabiegów</span></div>
+        <div class="q"><b class="num">${s.plon_t_ha?fmt(s.plon_t_ha):'—'}</b><span>t/ha</span></div>
+        <span class="chev">▶</span>
+      </div>
+    </div>
+    <div class="season-body">
+      <div class="sb-grid">
+        <div>
+          <div class="sb-title">Siew</div>
+          <div class="kv"><span>Data siewu</span><b>${esc(s.data_siewu||'—')}</b></div>
+          <div class="kv"><span>Norma wysiewu</span><b>${esc(s.norma_wysiewu||'—')}</b></div>
+          <div class="kv"><span>Odmiana</span><b style="font-family:var(--sans)">${esc(s.odmiana||'—')}</b></div>
+          <div class="sb-title" style="margin-top:20px">Plon
+            <button class="btn small" onclick="openPlonForm('${f.id}',${s.rok})">Zapisz plon</button></div>
+          ${plonBox}
+        </div>
+        <div>
+          <div class="sb-title">Zabiegi ŚOR / nawożenie
+            <button class="btn small" onclick="openZabiegForm('${f.id}',${s.rok})">+ Dodaj</button></div>
+          ${zabHtml}
+          ${costLine}
+          ${s.notatki?`<div class="sb-title" style="margin-top:20px">Notatki</div>
+            <div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap">${esc(s.notatki)}</div>`:''}
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--line);padding-top:14px">
+        <button class="btn small" onclick="openSeasonForm('${f.id}',${s.rok})">Edytuj sezon</button>
+        <button class="btn small danger" onclick="delSeason('${f.id}',${s.rok})">Usuń sezon</button>
+      </div>
+    </div>
+  </div>`;
+}
+function toggleSeason(fid,rok){ document.getElementById('s-'+fid+'-'+rok)?.classList.toggle('open'); }
+
+function renderLegend(){
+  const used=new Set();
+  state.fields.forEach(f=>f.sezony.forEach(s=>{ if(s.uprawa) used.add(s.uprawa); }));
+  if(!used.size) return '';
+  const items=[...used].sort((a,b)=>a.localeCompare(b,'pl')).map(c=>
+    `<div class="li" style="cursor:pointer" onclick="openColorsForm()" title="Kliknij, aby zmienić kolory"><span class="dot" style="background:${cropColor(c)}"></span>${esc(c)}</div>`).join('');
+  return `<div class="legend"><div class="li" style="font-weight:600;color:var(--ink)">Legenda upraw:</div>${items}
+    <button class="btn small" style="margin-left:6px" onclick="openColorsForm()">🎨 Zmień kolory</button></div>`;
+}
+
+/* --- Edytor kolorów upraw --- */
+function openColorsForm(){
+  const used=new Set(CROP_OPTIONS);
+  state.fields.forEach(f=>f.sezony.forEach(s=>{ if(s.uprawa) used.add(s.uprawa); }));
+  const rows=[...used].sort((a,b)=>a.localeCompare(b,'pl')).map(c=>
+    `<div class="color-row">
+      <input type="color" value="${cropColor(c)}" data-crop="${esc(c)}">
+      <span style="flex:1">${esc(c)}</span>
+      ${state.cropColors&&state.cropColors[c]?'<span class="muted" style="font-size:11px">zmieniony</span>':''}
+    </div>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>Kolory upraw</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body" style="max-height:60vh;overflow:auto">
+      <p class="hint" style="margin-top:0;margin-bottom:14px">Kliknij kwadrat, aby zmienić kolor uprawy. Kolory widać na mapie, kartach pól i pasmie płodozmianu.</p>
+      ${rows}
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="resetColors()" style="margin-right:auto">Przywróć domyślne</button>
+      <button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveColors()">Zapisz kolory</button>
+    </div>`);
+}
+function saveColors(){
+  state.cropColors=state.cropColors||{};
+  modalEl().querySelectorAll('input[type=color]').forEach(inp=>{ state.cropColors[inp.dataset.crop]=inp.value; });
+  save(); closeModal(); render();
+}
+function resetColors(){
+  if(!confirm('Przywrócić domyślne kolory wszystkich upraw?')) return;
+  state.cropColors={}; save(); closeModal(); render();
+}
+
+/* =========================================================
+   MODUŁ: FLOTA
+   ========================================================= */
+function renderFlotaModule(){
+  if(view.machineId) return renderMachineDetail();
+  const head=`<div class="module-head"><div><h1>Flota</h1><div class="sub">Maszyny, przeglądy, oleje, motogodziny</div></div>
+    <div class="spacer"></div><button class="btn primary" onclick="openMachineForm()">+ Dodaj maszynę</button></div>`;
+  if(!state.machines.length) return head+`<div class="empty-state"><div class="big">Brak maszyn</div>
+    <div style="margin-bottom:16px">Dodaj ciągnik, kombajn czy opryskiwacz — z przeglądami i motogodzinami.</div>
+    <button class="btn primary" onclick="openMachineForm()">+ Dodaj pierwszą maszynę</button></div>`;
+  const cards=state.machines.map(m=>{
+    const col=MACHINE_COLORS[m.typ]||'#8A8275';
+    const last=(m.przeglady||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
+    return `<div class="tile" onclick="goMachine('${m.id}')">
+      <div class="tile-bar" style="background:${col}"></div>
+      <div class="tile-body">
+        <span class="tag-pill" style="border-color:${col};color:${col}">${esc(m.typ||'Maszyna')}</span>
+        <h3 class="tile-name" style="margin-top:8px">${esc(m.nazwa)}</h3>
+        <div class="tile-sub">${esc([m.marka,m.model,m.rok].filter(Boolean).join(' · ')||'—')}${m.nr_rej?` · ${esc(m.nr_rej)}`:''}</div>
+        <div class="tile-row">
+          <div><div class="lab">Motogodziny</div><div class="big">${m.mth?fmt(m.mth)+' mth':'—'}</div></div>
+          <div style="text-align:right"><div class="lab">Ostatni przegląd</div><div class="big" style="font-size:14px">${last?esc(last.data):'—'}</div></div>
+        </div>
+      </div></div>`;
+  }).join('');
+  return head+`<div class="tile-grid">${cards}
+    <div class="add-card" onclick="openMachineForm()"><div class="plus">+</div><div>Dodaj maszynę</div></div></div>`;
+}
+function goMachine(id){ view.module='flota'; view.machineId=id; render(); window.scrollTo(0,0); }
+
+function renderMachineDetail(){
+  const m=state.machines.find(x=>x.id===view.machineId);
+  if(!m){ view.machineId=null; return renderFlotaModule(); }
+  const col=MACHINE_COLORS[m.typ]||'#8A8275';
+  const prz=(m.przeglady||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const kosztSum=prz.reduce((a,p)=>a+(parseFloat(String(p.koszt||'').replace(',','.'))||0),0);
+  const list=prz.length?prz.map(p=>`
+    <div class="zabieg"><div class="z-kind" style="background:${col}"></div>
+      <div class="z-main"><div class="z-name">${PRZEGLAD_TYPES[p.rodzaj]||p.rodzaj}${p.opis?` — ${esc(p.opis)}`:''}</div>
+        <div class="z-sub">${esc(p.data||'brak daty')}${p.mth?` · ${fmt(p.mth)} mth`:''}</div></div>
+      <div class="z-dose">${p.koszt?fmt(p.koszt)+' zł':''}</div>
+      <button class="x" onclick="delPrzeglad('${m.id}',${(m.przeglady||[]).indexOf(p)})">×</button>
+    </div>`).join(''):`<div class="z-empty">Brak przeglądów. Dodaj pierwszy wpis.</div>`;
+  return `
+    <button class="btn ghost small" onclick="goModule('flota')" style="margin-bottom:14px">← Flota</button>
+    <div class="detail-head">
+      <div><h1>${esc(m.nazwa)}</h1>
+        <div class="detail-meta">
+          <div><span>Typ</span><b style="font-family:var(--sans);font-size:14px;color:var(--ink)">${esc(m.typ||'—')}</b></div>
+          <div><span>Motogodziny</span><b class="num">${m.mth?fmt(m.mth)+' mth':'—'}</b></div>
+          <div><span>Nr rej.</span><b style="font-family:var(--sans);font-size:14px;color:var(--ink)">${esc(m.nr_rej||'—')}</b></div>
+          <div><span>Rocznik</span><b class="num">${esc(m.rok||'—')}</b></div>
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn small" onclick="openMachineForm('${m.id}')">Edytuj</button>
+        <button class="btn small primary" onclick="openPrzegladForm('${m.id}')">+ Dodaj przegląd</button>
+      </div>
+    </div>
+    ${m.notatki?`<div class="geo-note" style="background:rgba(200,155,44,.12);border-color:rgba(200,155,44,.35);color:var(--ink);margin-bottom:20px">📝 ${esc(m.notatki)}</div>`:''}
+    <div class="season"><div class="season-bar" style="background:${col}"></div>
+      <div style="padding:16px 18px">
+        <div class="sb-title">Przeglądy, oleje, naprawy <button class="btn small" onclick="openPrzegladForm('${m.id}')">+ Dodaj</button></div>
+        <div class="zabieg-list">${list}</div>
+        ${kosztSum>0?`<div class="cost-line"><span>Koszty serwisu razem</span><b>${fmt(kosztSum)} zł</b></div>`:''}
+      </div></div>`;
+}
+function openMachineForm(id){
+  const m=id?state.machines.find(x=>x.id===id):null;
+  const types=MACHINE_TYPES.map(t=>`<option ${m&&m.typ===t?'selected':''}>${t}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>${m?'Edytuj maszynę':'Nowa maszyna'}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Nazwa</label><input id="m_nazwa" value="${m?esc(m.nazwa):''}" placeholder="np. John Deere 6120M" autofocus></div>
+      <div class="field row2">
+        <div><label>Typ</label><select id="m_typ">${types}</select></div>
+        <div><label>Motogodziny (mth)</label><input id="m_mth" inputmode="decimal" value="${m?esc(m.mth||''):''}" placeholder="np. 4820"></div>
+      </div>
+      <div class="field row2">
+        <div><label>Marka</label><input id="m_marka" value="${m?esc(m.marka||''):''}" placeholder="np. John Deere"></div>
+        <div><label>Model</label><input id="m_model" value="${m?esc(m.model||''):''}" placeholder="np. 6120M"></div>
+      </div>
+      <div class="field row2">
+        <div><label>Rocznik</label><input id="m_rok" inputmode="numeric" value="${m?esc(m.rok||''):''}" placeholder="np. 2019"></div>
+        <div><label>Nr rejestracyjny</label><input id="m_rej" value="${m?esc(m.nr_rej||''):''}" placeholder="np. PO 4521K"></div>
+      </div>
+      <div class="field"><label>Notatki</label><textarea id="m_not" placeholder="uwagi o maszynie…">${m?esc(m.notatki||''):''}</textarea></div>
+    </div>
+    <div class="modal-foot">
+      ${m?`<button class="btn danger" onclick="delMachine('${m.id}')" style="margin-right:auto">Usuń</button>`:''}
+      <button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveMachine('${m?m.id:''}')">${m?'Zapisz':'Dodaj'}</button>
+    </div>`);
+}
+function saveMachine(id){
+  const nazwa=val('m_nazwa').trim(); if(!nazwa){ alert('Podaj nazwę maszyny.'); return; }
+  const data={nazwa,typ:val('m_typ'),mth:num(val('m_mth')),marka:val('m_marka').trim(),model:val('m_model').trim(),rok:val('m_rok').trim(),nr_rej:val('m_rej').trim(),notatki:val('m_not').trim()};
+  if(id){ Object.assign(state.machines.find(x=>x.id===id),data); }
+  else{ state.machines.push({id:uid(),...data,przeglady:[]}); }
+  save(); closeModal(); render();
+}
+function delMachine(id){ if(!confirm('Usunąć maszynę wraz z historią przeglądów?'))return; state.machines=state.machines.filter(x=>x.id!==id); save(); closeModal(); view.machineId=null; render(); }
+function openPrzegladForm(mid){
+  const opts=Object.keys(PRZEGLAD_TYPES).map(k=>`<option value="${k}">${PRZEGLAD_TYPES[k]}</option>`).join('');
+  const m=state.machines.find(x=>x.id===mid);
+  openModal(`
+    <div class="modal-head"><h3>Nowy przegląd</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field row2"><div><label>Rodzaj</label><select id="p_rodzaj">${opts}</select></div>
+        <div><label>Data</label><input id="p_data" type="date" value="${new Date().toISOString().slice(0,10)}"></div></div>
+      <div class="field row2"><div><label>Stan mth</label><input id="p_mth" inputmode="decimal" value="${m&&m.mth?esc(m.mth):''}" placeholder="motogodziny"></div>
+        <div><label>Koszt (zł)</label><input id="p_koszt" inputmode="decimal" placeholder="np. 1200"></div></div>
+      <div class="field"><label>Opis</label><input id="p_opis" placeholder="np. wymiana oleju + filtry" autofocus></div>
+      <div class="hint">Stan mth z przeglądu zaktualizuje bieżące motogodziny maszyny.</div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="savePrzeglad('${mid}')">Dodaj</button></div>`);
+}
+function savePrzeglad(mid){
+  const m=state.machines.find(x=>x.id===mid); const mth=num(val('p_mth'));
+  (m.przeglady=m.przeglady||[]).push({data:val('p_data'),rodzaj:val('p_rodzaj'),mth,koszt:num(val('p_koszt')),opis:val('p_opis').trim()});
+  if(mth) m.mth=mth;
+  save(); closeModal(); render();
+}
+function delPrzeglad(mid,idx){ const m=state.machines.find(x=>x.id===mid); m.przeglady.splice(idx,1); save(); render(); }
+
+/* =========================================================
+   MODUŁ: FINANSE
+   ========================================================= */
+function renderFinanseModule(){
+  const cy=String(view.finYear);
+  const years=[...new Set(state.finance.map(t=>(t.data||'').slice(0,4)).filter(Boolean))];
+  if(!years.includes(cy)) years.push(cy);
+  years.sort((a,b)=>b-a);
+  const yopts=years.map(y=>`<option value="${y}" ${y===cy?'selected':''}>${y}</option>`).join('');
+  const head=`<div class="module-head"><div><h1>Finanse</h1><div class="sub">Koszty i przychody — miesiąc po miesiącu</div></div>
+    <div class="spacer"></div>
+    <select class="sel" onchange="view.finYear=+this.value;view.finMonth=null;render()">${yopts}</select>
+    <button class="btn primary" onclick="openFinForm()">+ Dodaj wpis</button></div>`;
+  const inYear=state.finance.filter(t=>(t.data||'').slice(0,4)===cy);
+  const monthCost=Array(12).fill(0), monthInc=Array(12).fill(0);
+  inYear.forEach(t=>{ const mi=parseInt((t.data||'').slice(5,7),10)-1; if(mi<0||mi>11)return;
+    const v=parseFloat(String(t.kwota||'').replace(',','.'))||0; if(t.typ==='przychod') monthInc[mi]+=v; else monthCost[mi]+=v; });
+  const tiles=MIESIACE.map((mn,i)=>`<div class="fin-month ${view.finMonth===i?'active':''}" onclick="view.finMonth=(view.finMonth===${i}?null:${i});render()">
+      <div class="m">${mn}</div><div class="v">${monthCost[i]?'-'+fmt(monthCost[i]):'—'}</div>
+      ${monthInc[i]?`<div class="v plus">+${fmt(monthInc[i])}</div>`:''}</div>`).join('');
+  const catSum={};
+  inYear.filter(t=>t.typ!=='przychod').forEach(t=>{ catSum[t.kategoria]=(catSum[t.kategoria]||0)+(parseFloat(String(t.kwota||'').replace(',','.'))||0); });
+  const chips=Object.entries(catSum).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const c=FIN_CATEGORIES[k]||FIN_CATEGORIES.inne;
+    return `<div class="cat-chip"><span class="dot" style="background:${c.color}"></span>${c.label}: <b>${fmt(v)} zł</b></div>`;
+  }).join('');
+  const totalCost=monthCost.reduce((a,b)=>a+b,0), totalInc=monthInc.reduce((a,b)=>a+b,0);
+  let rows=inYear.slice();
+  if(view.finMonth!=null) rows=rows.filter(t=>parseInt((t.data||'').slice(5,7),10)-1===view.finMonth);
+  rows.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const trs=rows.length?rows.map(t=>{
+    const c=FIN_CATEGORIES[t.kategoria]||FIN_CATEGORIES.inne; const isInc=t.typ==='przychod';
+    return `<tr>
+      <td class="num muted">${esc(t.data||'')}</td>
+      <td><span class="cat-chip" style="padding:2px 9px;font-size:12px"><span class="dot" style="background:${c.color}"></span>${c.label}</span></td>
+      <td>${esc(t.opis||'')}</td>
+      <td class="fin-amt ${isInc?'przychod':'koszt'}">${isInc?'+':'−'}${fmt(t.kwota)} zł</td>
+      <td style="text-align:right"><button class="x" onclick="delFin('${t.id}')">×</button></td></tr>`;
+  }).join(''):`<tr><td colspan="5" class="muted" style="padding:20px">Brak wpisów w tym okresie. Dodaj pierwszy koszt lub przychód.</td></tr>`;
+  return head+`
+    <div class="mini-stats">
+      <div class="mini-stat"><b class="num" style="color:var(--rust)">${fmt(totalCost)} zł</b><span>koszty ${cy}</span></div>
+      <div class="mini-stat"><b class="num">${fmt(totalInc)} zł</b><span>przychody ${cy}</span></div>
+      <div class="mini-stat"><b class="num" style="color:${totalInc-totalCost>=0?'var(--pole-dark)':'var(--rust)'}">${fmt(totalInc-totalCost)} zł</b><span>saldo</span></div>
+    </div>
+    <div class="fin-months">${tiles}</div>
+    ${chips?`<div class="cat-chips">${chips}</div>`:''}
+    ${view.finMonth!=null?`<div class="muted" style="margin-bottom:10px;font-size:13px">Filtr: ${MIESIACE[view.finMonth]} ${cy} · <a href="#" onclick="view.finMonth=null;render();return false" style="color:var(--pole-dark)">pokaż cały rok</a></div>`:''}
+    <table class="fin-table"><thead><tr><th>Data</th><th>Kategoria</th><th>Opis</th><th style="text-align:right">Kwota</th><th></th></tr></thead>
+      <tbody>${trs}</tbody></table>`;
+}
+function openFinForm(){
+  const cats=Object.entries(FIN_CATEGORIES).map(([k,c])=>`<option value="${k}">${c.label}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>Nowy wpis</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field row2">
+        <div><label>Typ</label><select id="fn_typ"><option value="koszt">Koszt</option><option value="przychod">Przychód</option></select></div>
+        <div><label>Data</label><input id="fn_data" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+      </div>
+      <div class="field"><label>Kategoria</label><select id="fn_kat">${cats}</select></div>
+      <div class="field"><label>Kwota (zł)</label><input id="fn_kwota" inputmode="decimal" placeholder="np. 4800" autofocus></div>
+      <div class="field"><label>Opis</label><input id="fn_opis" placeholder="np. Tankowanie ON — 800 l"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveFin()">Dodaj wpis</button></div>`);
+}
+function saveFin(){
+  const kwota=num(val('fn_kwota')); if(!kwota){ alert('Podaj kwotę.'); return; }
+  state.finance.push({id:uid(),data:val('fn_data'),kategoria:val('fn_kat'),opis:val('fn_opis').trim(),kwota,typ:val('fn_typ')});
+  const y=val('fn_data').slice(0,4); if(y) view.finYear=+y;
+  save(); closeModal(); render();
+}
+function delFin(id){ state.finance=state.finance.filter(t=>t.id!==id); save(); render(); }
+
+/* =========================================================
+   MODUŁ: BYDŁO
+   ========================================================= */
+function wiek(d){ if(!d) return '—'; const days=Math.floor((Date.now()-new Date(d))/86400000); if(days<0) return '—';
+  const y=Math.floor(days/365), mo=Math.floor((days%365)/30); return y>0?`${y} l ${mo} mies`:`${mo} mies`; }
+function renderBydloModule(){
+  if(view.cattleId) return renderCattleDetail();
+  const head=`<div class="module-head"><div><h1>Bydło</h1><div class="sub">Stado, inseminacje, wycielenia, stan</div></div>
+    <div class="spacer"></div><button class="btn primary" onclick="openCattleForm()">+ Dodaj zwierzę</button></div>`;
+  if(!state.cattle.length) return head+`<div class="empty-state"><div class="big">Puste stado</div>
+    <div style="margin-bottom:16px">Dodaj krowy i jałówki — z kolczykami, inseminacjami i wycieleniami.</div>
+    <button class="btn primary" onclick="openCattleForm()">+ Dodaj pierwsze zwierzę</button></div>`;
+  const stado=state.cattle.filter(c=>c.status==='na stanie');
+  const upcoming=[];
+  stado.forEach(c=>{
+    const ins=(c.inseminacje||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
+    if(ins&&ins.data){
+      const due=new Date(ins.data); due.setDate(due.getDate()+CIAZA_DNI);
+      const lastWyc=(c.wycielenia||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
+      if(!lastWyc || (lastWyc.data||'')<ins.data) upcoming.push({c,due});
+    }
+  });
+  upcoming.sort((a,b)=>a.due-b.due);
+  const upHtml=upcoming.length?`<div class="season" style="margin-bottom:22px"><div class="season-bar" style="background:var(--wheat)"></div>
+    <div style="padding:14px 18px"><div class="sb-title" style="margin-bottom:12px">🍼 Spodziewane wycielenia</div>
+    ${upcoming.map(u=>{ const days=Math.round((u.due-new Date())/86400000);
+      return `<div class="kv"><span>${esc(u.c.kolczyk||'')}${u.c.imie?` · ${esc(u.c.imie)}`:''}</span>
+        <b>${u.due.toLocaleDateString('pl-PL')} <span class="muted" style="font-weight:400">(${days>=0?'za '+days+' dni':Math.abs(days)+' dni temu'})</span></b></div>`;
+    }).join('')}</div></div>`:'';
+  const counts={};
+  stado.forEach(c=>{ counts[c.plec]=(counts[c.plec]||0)+1; });
+  const stats=`<div class="mini-stats">
+    <div class="mini-stat"><b class="num">${stado.length}</b><span>na stanie</span></div>
+    <div class="mini-stat"><b class="num">${counts.krowa||0}</b><span>krowy</span></div>
+    <div class="mini-stat"><b class="num">${counts['jałówka']||0}</b><span>jałówki</span></div>
+    <div class="mini-stat"><b class="num">${counts['cielę']||0}</b><span>cielęta</span></div>
+  </div>`;
+  const rows=state.cattle.slice().sort((a,b)=>(a.status==='na stanie'?0:1)-(b.status==='na stanie'?0:1)).map(c=>{
+    const off=c.status!=='na stanie';
+    return `<tr data-field onclick="goCattle('${c.id}')" style="${off?'opacity:.5':''}">
+      <td class="num"><b>${esc(c.kolczyk||'—')}</b>${c.imie?`<div class="muted" style="font-size:12px">${esc(c.imie)}</div>`:''}</td>
+      <td><span class="tag-pill">${esc(c.plec)}</span></td>
+      <td>${esc(c.rasa||'—')}</td>
+      <td class="num">${wiek(c.data_urodzenia)}</td>
+      <td>${off?`<span class="muted">${esc(c.status)}</span>`:'<span style="color:var(--pole-dark)">na stanie</span>'}</td>
+      <td class="num muted">${(c.inseminacje||[]).length} ins · ${(c.wycielenia||[]).length} wyc</td>
+    </tr>`;
+  }).join('');
+  return head+stats+upHtml+`<div class="season-wrap"><table class="season-table">
+    <thead><tr><th>Kolczyk</th><th>Płeć</th><th>Rasa</th><th>Wiek</th><th>Status</th><th>Zdarzenia</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+function goCattle(id){ view.module='bydlo'; view.cattleId=id; render(); window.scrollTo(0,0); }
+function renderCattleDetail(){
+  const c=state.cattle.find(x=>x.id===view.cattleId);
+  if(!c){ view.cattleId=null; return renderBydloModule(); }
+  const ins=(c.inseminacje||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const wyc=(c.wycielenia||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const insList=ins.length?ins.map(x=>`<div class="zabieg"><div class="z-kind" style="background:#5B8A93"></div>
+    <div class="z-main"><div class="z-name">${esc(x.nasienie||'inseminacja')}</div><div class="z-sub">${esc(x.data||'')}${x.uwagi?` · ${esc(x.uwagi)}`:''}</div></div>
+    <button class="x" onclick="delIns('${c.id}',${(c.inseminacje||[]).indexOf(x)})">×</button></div>`).join(''):`<div class="z-empty">Brak inseminacji.</div>`;
+  const wycList=wyc.length?wyc.map(x=>`<div class="zabieg"><div class="z-kind" style="background:var(--wheat)"></div>
+    <div class="z-main"><div class="z-name">Wycielenie${x.cielak?` — cielak ${esc(x.cielak)}`:''}</div><div class="z-sub">${esc(x.data||'')}${x.uwagi?` · ${esc(x.uwagi)}`:''}</div></div>
+    <button class="x" onclick="delWyc('${c.id}',${(c.wycielenia||[]).indexOf(x)})">×</button></div>`).join(''):`<div class="z-empty">Brak wycieleń.</div>`;
+  let due='';
+  const lastIns=ins[0];
+  if(lastIns&&lastIns.data){ const d=new Date(lastIns.data); d.setDate(d.getDate()+CIAZA_DNI);
+    const lastW=wyc[0]; if(!lastW||(lastW.data||'')<lastIns.data){ const days=Math.round((d-new Date())/86400000);
+      due=`<div class="geo-note" style="margin-bottom:20px">🍼 Spodziewane wycielenie: <b>${d.toLocaleDateString('pl-PL')}</b> (${days>=0?'za '+days+' dni':Math.abs(days)+' dni temu'})</div>`; } }
+  const off=c.status!=='na stanie';
+  return `
+    <button class="btn ghost small" onclick="goModule('bydlo')" style="margin-bottom:14px">← Bydło</button>
+    <div class="detail-head">
+      <div><h1>${esc(c.kolczyk||'—')}${c.imie?` · ${esc(c.imie)}`:''}</h1>
+        <div class="detail-meta">
+          <div><span>Płeć</span><b style="font-family:var(--sans);font-size:14px;color:var(--ink)">${esc(c.plec)}</b></div>
+          <div><span>Rasa</span><b style="font-family:var(--sans);font-size:14px;color:var(--ink)">${esc(c.rasa||'—')}</b></div>
+          <div><span>Wiek</span><b class="num">${wiek(c.data_urodzenia)}</b></div>
+          <div><span>Status</span><b style="font-family:var(--sans);font-size:14px;color:${off?'var(--rust)':'var(--pole-dark)'}">${esc(c.status||'na stanie')}</b></div>
+          ${c.matka?`<div><span>Matka</span><b class="num" style="font-size:14px">${esc(c.matka)}</b></div>`:''}
+        </div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn small" onclick="openCattleForm('${c.id}')">Edytuj</button>
+        ${off?`<button class="btn small" onclick="restoreCattle('${c.id}')">Przywróć na stan</button>`:`<button class="btn small danger" onclick="removeCattle('${c.id}')">Zdejmij ze stanu</button>`}
+      </div>
+    </div>
+    ${due}
+    ${c.notatki?`<div class="geo-note" style="background:rgba(200,155,44,.12);border-color:rgba(200,155,44,.35);color:var(--ink);margin-bottom:20px">📝 ${esc(c.notatki)}</div>`:''}
+    <div class="sb-grid">
+      <div class="season" style="margin:0"><div class="season-bar" style="background:#5B8A93"></div><div style="padding:16px 18px">
+        <div class="sb-title">Inseminacje <button class="btn small" onclick="openInsForm('${c.id}')">+ Dodaj</button></div>
+        <div class="zabieg-list">${insList}</div></div></div>
+      <div class="season" style="margin:0"><div class="season-bar" style="background:var(--wheat)"></div><div style="padding:16px 18px">
+        <div class="sb-title">Wycielenia <button class="btn small" onclick="openWycForm('${c.id}')">+ Dodaj</button></div>
+        <div class="zabieg-list">${wycList}</div></div></div>
+    </div>`;
+}
+function openCattleForm(id){
+  const c=id?state.cattle.find(x=>x.id===id):null;
+  const sexes=CATTLE_SEX.map(s=>`<option ${c&&c.plec===s?'selected':''}>${s}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>${c?'Edytuj zwierzę':'Nowe zwierzę'}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field row2"><div><label>Nr kolczyka</label><input id="c_kol" value="${c?esc(c.kolczyk||''):''}" placeholder="PL0052…" autofocus></div>
+        <div><label>Imię / nazwa</label><input id="c_imie" value="${c?esc(c.imie||''):''}" placeholder="opcjonalnie"></div></div>
+      <div class="field row2"><div><label>Płeć</label><select id="c_plec">${sexes}</select></div>
+        <div><label>Rasa</label><input id="c_rasa" value="${c?esc(c.rasa||''):''}" placeholder="np. HF"></div></div>
+      <div class="field row2"><div><label>Data urodzenia</label><input id="c_ur" type="date" value="${c?c.data_urodzenia||'':''}"></div>
+        <div><label>Matka (kolczyk)</label><input id="c_matka" value="${c?esc(c.matka||''):''}" placeholder="opcjonalnie"></div></div>
+      <div class="field"><label>Notatki</label><textarea id="c_not" placeholder="uwagi…">${c?esc(c.notatki||''):''}</textarea></div>
+    </div>
+    <div class="modal-foot">
+      ${c?`<button class="btn danger" onclick="delCattle('${c.id}')" style="margin-right:auto">Usuń</button>`:''}
+      <button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveCattle('${c?c.id:''}')">${c?'Zapisz':'Dodaj'}</button>
+    </div>`);
+}
+function saveCattle(id){
+  const kol=val('c_kol').trim(), imie=val('c_imie').trim();
+  if(!kol&&!imie){ alert('Podaj numer kolczyka lub imię.'); return; }
+  const data={kolczyk:kol,imie,plec:val('c_plec'),rasa:val('c_rasa').trim(),data_urodzenia:val('c_ur'),matka:val('c_matka').trim(),notatki:val('c_not').trim()};
+  if(id){ Object.assign(state.cattle.find(x=>x.id===id),data); }
+  else{ state.cattle.push({id:uid(),...data,status:'na stanie',inseminacje:[],wycielenia:[]}); }
+  save(); closeModal(); render();
+}
+function delCattle(id){ if(!confirm('Usunąć zwierzę z rejestru całkowicie?'))return; state.cattle=state.cattle.filter(x=>x.id!==id); save(); closeModal(); view.cattleId=null; render(); }
+function removeCattle(id){ const powod=prompt('Powód zdjęcia ze stanu (np. sprzedane, padłe, ubój):','sprzedane'); if(powod===null)return;
+  const c=state.cattle.find(x=>x.id===id); c.status=powod.trim()||'zdjęte'; c.data_zdjecia=new Date().toISOString().slice(0,10); save(); render(); }
+function restoreCattle(id){ const c=state.cattle.find(x=>x.id===id); c.status='na stanie'; delete c.data_zdjecia; save(); render(); }
+function openInsForm(cid){
+  openModal(`
+    <div class="modal-head"><h3>Nowa inseminacja</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Data</label><input id="i_data" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>Byk / nasienie</label><input id="i_nas" placeholder="np. Byk Danillo (HF)" autofocus></div>
+      <div class="field"><label>Uwagi</label><input id="i_uw" placeholder="np. 1. krycie"></div>
+      <div class="hint">Spodziewane wycielenie policzy się automatycznie (~${CIAZA_DNI} dni).</div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveIns('${cid}')">Dodaj</button></div>`);
+}
+function saveIns(cid){ const c=state.cattle.find(x=>x.id===cid); (c.inseminacje=c.inseminacje||[]).push({data:val('i_data'),nasienie:val('i_nas').trim(),uwagi:val('i_uw').trim()}); save(); closeModal(); render(); }
+function delIns(cid,idx){ const c=state.cattle.find(x=>x.id===cid); c.inseminacje.splice(idx,1); save(); render(); }
+function openWycForm(cid){
+  openModal(`
+    <div class="modal-head"><h3>Nowe wycielenie</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Data</label><input id="w_data" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>Kolczyk cielaka</label><input id="w_ciel" placeholder="opcjonalnie"></div>
+      <div class="field"><label>Uwagi</label><input id="w_uw" placeholder="np. jałówka, bez komplikacji"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveWyc('${cid}')">Dodaj</button></div>`);
+}
+function saveWyc(cid){ const c=state.cattle.find(x=>x.id===cid); (c.wycielenia=c.wycielenia||[]).push({data:val('w_data'),cielak:val('w_ciel').trim(),uwagi:val('w_uw').trim()}); save(); closeModal(); render(); }
+function delWyc(cid,idx){ const c=state.cattle.find(x=>x.id===cid); c.wycielenia.splice(idx,1); save(); render(); }
+
+/* =========================================================
+   Formularze (modal)
+   ========================================================= */
+const overlay=()=>document.getElementById('overlay');
+const modalEl=()=>document.getElementById('modal');
+function openModal(html){ modalEl().innerHTML=html; overlay().classList.add('on'); }
+function closeModal(){ overlay().classList.remove('on'); pendingGeo=null; }
+overlay().addEventListener('click',e=>{ if(e.target===overlay()) closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+function cropSelect(id,val){
+  const opts=CROP_OPTIONS.map(c=>`<option ${c===val?'selected':''}>${c}</option>`).join('');
+  const custom=val&&!CROP_OPTIONS.includes(val)?`<option selected>${esc(val)}</option>`:'';
+  return `<select id="${id}"><option value="">— wybierz —</option>${custom}${opts}<option value="__inne">➕ inna (wpisz)…</option></select>`;
+}
+
+/* --- Pole --- */
+function openFieldForm(id, prefillHa){
+  const f=id?state.fields.find(x=>x.id===id):null;
+  const areaVal = prefillHa!==undefined ? String(prefillHa).replace('.',',') : (f?f.powierzchnia_ha:'');
+  openModal(`
+    <div class="modal-head"><h3>${f?'Edytuj pole':'Nowe pole'}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      ${pendingGeo?`<div class="geo-note">◈ Obrys narysowany na mapie — powierzchnię policzono automatycznie. Nadaj polu nazwę.</div>`:''}
+      ${(f&&f.geo&&f.geo.polygon)?`<div class="geo-note">◈ To pole ma obrys na mapie. Kształt zmienisz na zakładce Mapa.</div>`:''}
+      <div class="field"><label>Nazwa pola</label><input id="f_nazwa" value="${f?esc(f.nazwa):''}" placeholder="np. Za stodołą" autofocus></div>
+      <div class="field"><label>Powierzchnia (ha)</label><input id="f_ha" type="text" inputmode="decimal" value="${areaVal}" placeholder="np. 12,4">
+        ${pendingGeo?'<div class="hint">Policzono z narysowanego obrysu — możesz poprawić ręcznie.</div>':''}</div>
+      <div class="field"><label>Lokalizacja / gleba (opcjonalnie)</label><input id="f_lok" value="${f?esc(f.lokalizacja||''):''}" placeholder="np. przy lesie, gleba IV kl."></div>
+      <div class="field"><label>Komentarz (opcjonalnie)</label><textarea id="f_kom" placeholder="uwagi o działce…">${f?esc(f.komentarz||''):''}</textarea></div>
+    </div>
+    <div class="modal-foot">
+      ${f?`<button class="btn danger" onclick="delField('${f.id}')" style="margin-right:auto">Usuń pole</button>`:''}
+      <button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveField('${f?f.id:''}')">${f?'Zapisz':'Dodaj pole'}</button>
+    </div>`);
+}
+function saveField(id){
+  const nazwa=val('f_nazwa').trim();
+  if(!nazwa){ alert('Podaj nazwę pola.'); return; }
+  const ha=num(val('f_ha'));
+  const lok=val('f_lok').trim();
+  const kom=val('f_kom').trim();
+  if(id){
+    const f=state.fields.find(x=>x.id===id);
+    f.nazwa=nazwa; f.powierzchnia_ha=ha; f.lokalizacja=lok; f.komentarz=kom;
+  }else{
+    const nf={id:uid(),nazwa,powierzchnia_ha:ha,lokalizacja:lok,komentarz:kom,sezony:[]};
+    if(pendingGeo) nf.geo=pendingGeo;
+    state.fields.push(nf);
+  }
+  pendingGeo=null; save(); closeModal(); render();
+}
+function delField(id){
+  if(!confirm('Usunąć to pole wraz z całą historią sezonów? Tej operacji nie można cofnąć.')) return;
+  state.fields=state.fields.filter(x=>x.id!==id);
+  save(); closeModal(); view.name='pola'; render();
+}
+
+/* --- Sezon --- */
+function openSeasonForm(fid,rok){
+  const f=state.fields.find(x=>x.id===fid);
+  const s=rok!==undefined?seasonOf(f,rok):null;
+  const yr=s?s.rok:view.year;
+  openModal(`
+    <div class="modal-head"><h3>${s?'Edytuj sezon '+s.rok:'Nowy sezon'}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field row2">
+        <div><label>Rok zbioru</label><input id="s_rok" type="number" value="${yr}" ${s?'readonly':''}></div>
+        <div><label>Uprawa</label>${cropSelect('s_uprawa', s?s.uprawa:'')}</div>
+      </div>
+      <div class="field" id="s_inne_wrap" style="display:none"><label>Nazwa uprawy (własna)</label><input id="s_inne" placeholder="wpisz uprawę"></div>
+      <div class="field row2">
+        <div><label>Odmiana</label><input id="s_odm" value="${s?esc(s.odmiana||''):''}" placeholder="np. RGT Ritter"></div>
+        <div><label>Data siewu</label><input id="s_siew" type="date" value="${s?s.data_siewu||'':''}"></div>
+      </div>
+      <div class="field"><label>Norma wysiewu</label><input id="s_norma" value="${s?esc(s.norma_wysiewu||''):''}" placeholder="np. 185 kg/ha"></div>
+      <div class="field"><label>Notatki</label><textarea id="s_notatki" placeholder="obserwacje, pogoda, uwagi…">${s?esc(s.notatki||''):''}</textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveSeason('${fid}',${s?s.rok:'null'})">${s?'Zapisz':'Dodaj sezon'}</button>
+    </div>`);
+  const sel=document.getElementById('s_uprawa');
+  sel.addEventListener('change',()=>{ document.getElementById('s_inne_wrap').style.display=sel.value==='__inne'?'block':'none'; });
+}
+function saveSeason(fid,rok){
+  const f=state.fields.find(x=>x.id===fid);
+  const newRok=parseInt(val('s_rok'),10);
+  if(!newRok){ alert('Podaj rok.'); return; }
+  let uprawa=val('s_uprawa'); if(uprawa==='__inne') uprawa=val('s_inne').trim();
+  const data={uprawa,odmiana:val('s_odm').trim(),data_siewu:val('s_siew'),norma_wysiewu:val('s_norma').trim(),notatki:val('s_notatki').trim()};
+  if(rok!==null&&rok!==undefined){
+    Object.assign(seasonOf(f,rok),data);
+  }else{
+    if(seasonOf(f,newRok)){ alert('Sezon '+newRok+' już istnieje na tym polu. Edytuj istniejący.'); return; }
+    f.sezony.push({rok:newRok,...data,zabiegi:[],plon_t:'',plon_t_ha:'',wilgotnosc:'',data_zbioru:''});
+  }
+  save(); closeModal(); render();
+  setTimeout(()=>document.getElementById('s-'+fid+'-'+newRok)?.classList.add('open'),0);
+}
+function delSeason(fid,rok){
+  if(!confirm('Usunąć sezon '+rok+'?')) return;
+  const f=state.fields.find(x=>x.id===fid);
+  f.sezony=f.sezony.filter(s=>s.rok!==rok);
+  save(); render();
+}
+
+/* --- Zabieg --- */
+function openZabiegForm(fid,rok){
+  const kinds=Object.keys(ZABIEG_KINDS).map(k=>`<option value="${k}">${ZABIEG_LABEL[k]}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>Nowy zabieg</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field row2">
+        <div><label>Rodzaj</label><select id="z_rodzaj">${kinds}</select></div>
+        <div><label>Data</label><input id="z_data" type="date"></div>
+      </div>
+      <div class="field"><label>Środek / nawóz</label><input id="z_srodek" placeholder="np. Input 460 EC" autofocus></div>
+      <div class="field row2">
+        <div><label>Dawka</label><input id="z_dawka" inputmode="decimal" placeholder="np. 1,0"></div>
+        <div><label>Jednostka</label><select id="z_jedn"><option>l/ha</option><option>kg/ha</option><option>g/ha</option><option>szt/ha</option><option>t/ha</option></select></div>
+      </div>
+      <div class="field"><label>Koszt zabiegu (zł, opcjonalnie)</label><input id="z_koszt" inputmode="decimal" placeholder="np. 320">
+        <div class="hint">Łączny koszt tego zabiegu na całe pole — policzy się zużycie i koszt na hektar.</div></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveZabieg('${fid}',${rok})">Dodaj zabieg</button></div>`);
+}
+function saveZabieg(fid,rok){
+  const srodek=val('z_srodek').trim();
+  if(!srodek){ alert('Podaj nazwę środka.'); return; }
+  const f=state.fields.find(x=>x.id===fid); const s=seasonOf(f,rok);
+  (s.zabiegi=s.zabiegi||[]).push({data:val('z_data'),rodzaj:val('z_rodzaj'),srodek,dawka:val('z_dawka').trim(),jednostka:val('z_jedn'),koszt:num(val('z_koszt'))});
+  save(); closeModal(); render();
+  setTimeout(()=>document.getElementById('s-'+fid+'-'+rok)?.classList.add('open'),0);
+}
+function delZabieg(fid,rok,idx){
+  const f=state.fields.find(x=>x.id===fid); const s=seasonOf(f,rok);
+  s.zabiegi.splice(idx,1); save(); render();
+  setTimeout(()=>document.getElementById('s-'+fid+'-'+rok)?.classList.add('open'),0);
+}
+
+/* --- Plon --- */
+function openPlonForm(fid,rok){
+  const f=state.fields.find(x=>x.id===fid); const s=seasonOf(f,rok);
+  openModal(`
+    <div class="modal-head"><h3>Plon — ${esc(s.uprawa||'')} ${rok}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field row2">
+        <div><label>Plon łącznie (t)</label><input id="p_t" inputmode="decimal" value="${s.plon_t||''}" placeholder="np. 46,5"></div>
+        <div><label>Plon z hektara (t/ha)</label><input id="p_tha" inputmode="decimal" value="${s.plon_t_ha||''}" placeholder="auto z ha"></div>
+      </div>
+      <div class="hint">Podaj plon łączny — t/ha policzy się z powierzchni pola (${fmt(f.powierzchnia_ha)} ha). Możesz też wpisać t/ha ręcznie.</div>
+      <div class="field row2" style="margin-top:15px">
+        <div><label>Wilgotność (%)</label><input id="p_wilg" inputmode="decimal" value="${s.wilgotnosc||''}" placeholder="np. 13"></div>
+        <div><label>Data zbioru</label><input id="p_data" type="date" value="${s.data_zbioru||''}"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="savePlon('${fid}',${rok})">Zapisz plon</button></div>`);
+  const t=document.getElementById('p_t'), tha=document.getElementById('p_tha');
+  t.addEventListener('input',()=>{ const ha=parseFloat(f.powierzchnia_ha)||0; const v=num(t.value);
+    if(ha>0&&v!=='') tha.value=(parseFloat(v)/ha).toFixed(2).replace('.',','); });
+}
+function savePlon(fid,rok){
+  const f=state.fields.find(x=>x.id===fid); const s=seasonOf(f,rok);
+  s.plon_t=num(val('p_t')); s.plon_t_ha=num(val('p_tha')); s.wilgotnosc=num(val('p_wilg')); s.data_zbioru=val('p_data');
+  save(); closeModal(); render();
+  setTimeout(()=>document.getElementById('s-'+fid+'-'+rok)?.classList.add('open'),0);
+}
+
+/* =========================================================
+   Nazwa / eksport / import
+   ========================================================= */
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); const d=new Date().toISOString().slice(0,10);
+  a.href=URL.createObjectURL(blob); a.download=`m-farmx-kopia-${d}.json`; a.click(); URL.revokeObjectURL(a.href);
+}
+function importData(ev){
+  const file=ev.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      if(!data.fields||!Array.isArray(data.fields)) throw new Error('zły format');
+      if(!confirm('Wczytać dane z pliku? Zastąpią one obecne dane w tej przeglądarce.\n(Jeśli chcesz je zachować — najpierw zrób Kopię.)')) return;
+      state=data;
+      if(!state.ui) state.ui={}; if(!state.cropColors) state.cropColors={};
+      if(!state.machines) state.machines=[]; if(!state.finance) state.finance=[]; if(!state.cattle) state.cattle=[];
+      save();
+      view={module:'pulpit',name:'sezon',fieldId:null,year:currentSeasonYear(),machineId:null,cattleId:null,finYear:new Date().getFullYear(),finMonth:null};
+      render();
+    }catch(e){ alert('Nie udało się wczytać pliku — nieprawidłowy format kopii M-FarmX.'); }
+    ev.target.value='';
+  };
+  r.readAsText(file);
+}
+
+/* ---------- helpers ---------- */
+function val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function num(v){ if(v===''||v==null) return ''; return String(v).replace(',','.').replace(/[^\d.]/g,''); }
+function fmt(v){ if(v===''||v==null) return '—'; const n=parseFloat(String(v).replace(',','.')); if(isNaN(n)) return esc(v); return n.toLocaleString('pl-PL',{maximumFractionDigits:2}); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+boot();
+</script>
+</body>
+</html>

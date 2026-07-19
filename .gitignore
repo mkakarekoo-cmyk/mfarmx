@@ -1,0 +1,12 @@
+# Kopie danych użytkownika (eksporty JSON gospodarstwa) — NIE commitować
+backups/
+*.json
+!vercel.json
+
+# Vercel
+.vercel
+
+# System / edytory
+Thumbs.db
+.DS_Store
+*.log
