@@ -423,6 +423,8 @@
   .auth-remember input{width:auto;min-height:0}
   .auth-err{color:var(--rust);font-size:13px;margin-top:10px;min-height:16px;font-weight:500}
   .auth-note{font-size:11.5px;color:var(--ink-soft);margin-top:16px;text-align:center;line-height:1.5}
+  .auth-legal{font-size:11px;color:var(--ink-soft);margin-top:22px;padding-top:14px;border-top:1px solid var(--border,#e3e3e0);text-align:center}
+  .auth-legal a{color:var(--pole);font-weight:600}
   @media(max-width:760px){ .auth-side{display:none} .auth-panel{width:100%} }
 </style>
 </head>
@@ -668,7 +670,9 @@ function authScreen(inner){
         <li>${icon('cow',18)} Stado, inseminacje i wycielenia</li>
       </ul>
     </div>
-    <div class="auth-panel"><div class="auth-card">${inner}</div></div>
+    <div class="auth-panel"><div class="auth-card">${inner}
+      <div class="auth-legal">Zakładając konto akceptujesz <a href="polityka-prywatnosci.html" target="_blank" rel="noopener">Politykę Prywatności</a>.</div>
+    </div></div>
   </div>`;
 }
 function renderAuth(mode){
