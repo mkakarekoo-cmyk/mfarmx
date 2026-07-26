@@ -55,6 +55,7 @@
   .sb-item:hover{background:rgba(255,255,255,.55);color:var(--ink)}
   .sb-item.active{background:var(--card);color:var(--ink);border-color:var(--line);font-weight:600;box-shadow:var(--shadow)}
   .sb-count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .sb-sep{height:1px;background:var(--border,#D8D8D8);margin:8px 4px;opacity:.7}
   .sb-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
   .sb-farm-lbl{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);padding:0 4px}
   .sb-farm{font-family:var(--serif);font-size:16px;color:var(--ink);width:100%;border:none;background:transparent;
@@ -426,6 +427,48 @@
   .auth-legal{font-size:11px;color:var(--ink-soft);margin-top:22px;padding-top:14px;border-top:1px solid var(--border,#e3e3e0);text-align:center}
   .auth-legal a{color:var(--pole);font-weight:600}
   @media(max-width:760px){ .auth-side{display:none} .auth-panel{width:100%} }
+
+  /* ===================== USTAWIENIA + GRAFIK ===================== */
+  .opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .opt-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px;background:var(--card,#fff);
+    border:1.5px solid var(--line,#D8D8D8);border-radius:10px;cursor:pointer;transition:all .12s;font-family:inherit}
+  .opt-card:hover{border-color:var(--pole,#5E7F54)}
+  .opt-card.sel{border-color:var(--pole,#5E7F54);background:rgba(94,127,84,.08);box-shadow:0 0 0 1px var(--pole,#5E7F54) inset}
+  .opt-emoji{font-size:30px;line-height:1}
+  .opt-name{font-size:13px;font-weight:600;color:var(--ink,#3D3D3D);text-align:center}
+  .set-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line,#eee)}
+  .set-row:first-of-type{border-top:none}
+  .set-name{font-size:14px;font-weight:600;color:var(--ink,#3D3D3D)}
+  .set-desc{font-size:12.5px;color:var(--ink-soft,#777);line-height:1.5}
+  .set-input{width:100%;max-width:420px;height:40px;padding:0 12px;border:1px solid var(--line,#D8D8D8);border-radius:8px;font-family:inherit;font-size:14px}
+  .switch{width:46px;height:26px;border-radius:14px;background:#ccc;border:none;position:relative;cursor:pointer;flex:0 0 auto;transition:background .15s;padding:0}
+  .switch span{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .switch.on{background:var(--pole,#5E7F54)}
+  .switch.on span{left:23px}
+  .grafik-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .grafik-week{font-weight:600;color:var(--ink,#3D3D3D);font-size:15px}
+  .wlegend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .wchip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:var(--card,#fff);border:1px solid var(--line,#D8D8D8);
+    border-radius:20px;font-size:12.5px;color:var(--ink,#3D3D3D);cursor:pointer}
+  .wchip:hover{border-color:var(--pole,#5E7F54)}
+  .wdot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+  .cal-wrap{overflow-x:auto;border:1px solid var(--line,#D8D8D8);border-radius:10px;background:var(--card,#fff)}
+  .cal{border-collapse:collapse;width:100%;min-width:680px;table-layout:fixed}
+  .cal th{background:#F1F3EF;font-size:12px;font-weight:600;color:var(--ink-soft,#555);padding:8px 6px;text-align:center;border-bottom:1px solid var(--line,#D8D8D8);border-left:1px solid var(--line,#eee)}
+  .cal td{width:14.28%;border-left:1px solid var(--line,#eee);border-bottom:1px solid var(--line,#f0f0f0);padding:4px;vertical-align:top;height:96px;position:relative;cursor:pointer}
+  .cal td.blank{background:#fafafa;cursor:default}
+  .cal td.today{background:rgba(94,127,84,.06)}
+  .cal td:hover .add-shift{opacity:.6}
+  .cal-day{font-size:12px;font-weight:600;color:#999;margin-bottom:3px}
+  .cal td.today .cal-day{color:var(--pole-dark,#4A6543)}
+  .shift{color:#fff;border-radius:6px;padding:3px 6px;margin-bottom:3px;font-size:11px;line-height:1.25;cursor:pointer;overflow:hidden}
+  .shift b{font-weight:700;display:block}
+  .shift span{opacity:.92;font-size:10.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .shift:hover{filter:brightness(1.08)}
+  .add-shift{position:absolute;bottom:3px;right:6px;color:var(--pole,#5E7F54);font-weight:700;opacity:0;transition:opacity .1s;pointer-events:none;font-size:14px}
+  .cdots{display:flex;gap:8px;flex-wrap:wrap}
+  .cdot{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+  .cdot.sel{border-color:var(--ink,#333);box-shadow:0 0 0 2px #fff inset}
 </style>
 </head>
 <body>
@@ -485,9 +528,20 @@ const FIN_CATEGORIES = {
 };
 const MIESIACE = ['styczeń','luty','marzec','kwiecień','maj','czerwiec','lipiec','sierpień','wrzesień','październik','listopad','grudzień'];
 
-/* --- Bydło --- */
+/* --- Hodowla (gatunki) --- */
 const CATTLE_SEX = ['krowa','jałówka','byk','cielę'];
 const CIAZA_DNI = 283; // średnia ciąża krowy
+// Konfiguracja modułu hodowli w zależności od wybranego gatunku (state.settings.species)
+const SPECIES = {
+  bydlo:  {label:'Bydło',          emoji:'🐄', sub:'Stado, inseminacje, wycielenia, stan', sexes:['krowa','jałówka','byk','cielę'],  breed:'Inseminacja', breedPl:'Inseminacje', birth:'Wycielenie',  birthPl:'Wycielenia',  young:'cielak', gest:283},
+  trzoda: {label:'Trzoda chlewna', emoji:'🐖', sub:'Stado, krycia, oproszenia, stan',      sexes:['maciora','loszka','knur','prosię'], breed:'Krycie', breedPl:'Krycia', birth:'Oproszenie', birthPl:'Oproszenia', young:'prosię', gest:114},
+  konie:  {label:'Konie',          emoji:'🐎', sub:'Stado, krycia, wyźrebienia, stan',      sexes:['klacz','ogier','wałach','źrebię'],  breed:'Krycie', breedPl:'Krycia', birth:'Wyźrebienie', birthPl:'Wyźrebienia', young:'źrebię', gest:340},
+  owce:   {label:'Owce',           emoji:'🐑', sub:'Stado, krycia, wykoty, stan',           sexes:['owca','baran','jagnię'],            breed:'Krycie', breedPl:'Krycia', birth:'Wykot',      birthPl:'Wykoty',      young:'jagnię', gest:150},
+  kozy:   {label:'Kozy',           emoji:'🐐', sub:'Stado, krycia, okocenia, stan',         sexes:['koza','kozioł','koźlę'],            breed:'Krycie', breedPl:'Krycia', birth:'Okocenie',   birthPl:'Okocenia',    young:'koźlę',  gest:150},
+  drob:   {label:'Drób',           emoji:'🐔', sub:'Stado i lęgi',                          sexes:['kura','kogut','pisklę'],            breed:'Lęg',    breedPl:'Lęgi',   birth:'Wylęg',      birthPl:'Wylęgi',      young:'pisklę', gest:21},
+};
+function sp(){ return SPECIES[(state.settings && state.settings.species) || 'bydlo'] || SPECIES.bydlo; }
+function modOn(m){ const mo=(state.settings && state.settings.modules)||{}; return mo[m]!==false; }
 
 /* Kolory obrysów pól na mapie (styl John Deere Operations Center) */
 const FIELD_BORDER = ['#F0B13A','#8E6FBE','#E8833A','#57B657','#D9534F','#4A90D9','#FFFFFF','#3DB4C4'];
@@ -504,10 +558,15 @@ let CMAP=null, createDrawn=null, newFieldGeo=null;   // ekran „Nowe pole"
 function currentSeasonYear(){ const d=new Date(); return d.getMonth()>=7 ? d.getFullYear()+1 : d.getFullYear(); }
 function uid(){ return 'f'+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3); }
 
-function emptyState(){ return {farm:{nazwa:'Moje gospodarstwo'}, ui:{}, cropColors:{}, fields:[], machines:[], finance:[], cattle:[]}; }
+function defaultSettings(){ return {species:'bydlo', modules:{flota:true, finanse:true, hodowla:true, grafik:true}}; }
+function emptyState(){ return {farm:{nazwa:'Moje gospodarstwo'}, ui:{}, cropColors:{}, fields:[], machines:[], finance:[], cattle:[], workers:[], schedule:[], settings:defaultSettings()}; }
 function ensureShape(){
   state=state||{}; state.farm=state.farm||{nazwa:'Moje gospodarstwo'}; state.ui=state.ui||{}; state.cropColors=state.cropColors||{};
   state.fields=state.fields||[]; state.machines=state.machines||[]; state.finance=state.finance||[]; state.cattle=state.cattle||[];
+  state.workers=state.workers||[]; state.schedule=state.schedule||[];
+  state.settings=state.settings||defaultSettings();
+  state.settings.species=state.settings.species||'bydlo';
+  state.settings.modules=Object.assign({flota:true, finanse:true, hodowla:true, grafik:true}, state.settings.modules||{});
 }
 /* Wczytanie stanu gospodarstwa danego użytkownika (z chmury; offline → cache) */
 async function loadStateForUser(user){
@@ -751,12 +810,18 @@ function render(){
   if(view.module!=='pulpit' && LMAP){ try{LMAP.remove();}catch(e){} LMAP=null; }
   if(!(view.module==='pola'&&view.name==='nowePole') && CMAP){ try{CMAP.remove();}catch(e){} CMAP=null; }
 
+  // guard: wyłączony moduł → wróć na pulpit
+  const guard={flota:'flota', finanse:'finanse', bydlo:'hodowla', grafik:'grafik'};
+  if(guard[view.module] && !modOn(guard[view.module])) view.module='pulpit';
+
   let content='';
   if(view.module==='pulpit') content=renderPulpitModule();
   else if(view.module==='pola') content=renderPolaModule();
   else if(view.module==='flota') content=renderFlotaModule();
   else if(view.module==='finanse') content=renderFinanseModule();
   else if(view.module==='bydlo') content=renderBydloModule();
+  else if(view.module==='grafik') content=renderGrafikModule();
+  else if(view.module==='ustawienia') content=renderUstawieniaModule();
 
   document.getElementById('app').innerHTML=`${renderNavbar()}<div class="layout${view.sidebarCollapsed?' collapsed':''}">${renderSidebar()}<main class="content">${content}</main></div>`;
 
@@ -768,17 +833,22 @@ function render(){
 }
 
 function renderSidebar(){
-  const item=(m,ic,lbl,count)=>`<button class="sb-item ${view.module===m?'active':''}" onclick="goModule('${m}')">
-    <span class="ic"><img src="icons/${m}.png" alt="" class="sb-ic-img" onerror="this.parentNode.textContent='${ic}'"></span><span class="lbl">${lbl}</span>${count!=null?`<span class="sb-count">${count}</span>`:''}</button>`;
+  // img=nazwa pliku ikony (bez rozszerzenia) lub null → wtedy sam emoji
+  const item=(m,ic,lbl,count,img)=>`<button class="sb-item ${view.module===m?'active':''}" onclick="goModule('${m}')">
+    <span class="ic">${img?`<img src="icons/${img}.png" alt="" class="sb-ic-img" onerror="this.parentNode.textContent='${ic}'">`:ic}</span><span class="lbl">${lbl}</span>${count!=null?`<span class="sb-count">${count}</span>`:''}</button>`;
   const naStanie=state.cattle.filter(c=>c.status==='na stanie').length;
+  const s=sp();
+  const nav=[ item('pulpit','📊','Pulpit',null,'pulpit'), item('pola','🌾','Pola',state.fields.length,'pola') ];
+  if(modOn('flota'))   nav.push(item('flota','🚜','Flota',state.machines.length,'flota'));
+  if(modOn('finanse')) nav.push(item('finanse','💰','Finanse',null,'finanse'));
+  if(modOn('hodowla')) nav.push(item('bydlo',s.emoji,s.label,naStanie, s.label==='Bydło'?'bydlo':null));
+  if(modOn('grafik'))  nav.push(item('grafik','📅','Grafik',state.workers.length,null));
   return `<aside class="sidebar">
     <div class="sb-brand" onclick="goModule('pulpit')" title="M-FarmX"><span class="glyph">M-FarmX</span><span class="tag">gospodarstwo</span></div>
     <nav class="sb-nav">
-      ${item('pulpit','📊','Pulpit',null)}
-      ${item('pola','🌾','Pola',state.fields.length)}
-      ${item('flota','🚜','Flota',state.machines.length)}
-      ${item('finanse','💰','Finanse',null)}
-      ${item('bydlo','🐄','Bydło',naStanie)}
+      ${nav.join('\n      ')}
+      <div class="sb-sep"></div>
+      ${item('ustawienia','⚙️','Ustawienia',null,null)}
     </nav>
     <div class="sb-foot">
       <div class="sb-farm-lbl">Gospodarstwo</div>
@@ -1581,36 +1651,36 @@ function delFin(id){ state.finance=state.finance.filter(t=>t.id!==id); save(); r
 function wiek(d){ if(!d) return '—'; const days=Math.floor((Date.now()-new Date(d))/86400000); if(days<0) return '—';
   const y=Math.floor(days/365), mo=Math.floor((days%365)/30); return y>0?`${y} l ${mo} mies`:`${mo} mies`; }
 function renderBydloModule(){
+  const S=sp();
   if(view.cattleId) return renderCattleDetail();
-  const head=`<div class="module-head"><div><h1>Bydło</h1><div class="sub">Stado, inseminacje, wycielenia, stan</div></div>
+  const head=`<div class="module-head"><div><h1>${S.emoji} ${S.label}</h1><div class="sub">${S.sub}</div></div>
     <div class="spacer"></div><button class="btn primary" onclick="openCattleForm()">+ Dodaj zwierzę</button></div>`;
   if(!state.cattle.length) return head+`<div class="empty-state"><div class="big">Puste stado</div>
-    <div style="margin-bottom:16px">Dodaj krowy i jałówki — z kolczykami, inseminacjami i wycieleniami.</div>
+    <div style="margin-bottom:16px">Dodaj zwierzęta — z numerami, ${S.breedPl.toLowerCase()} i ${S.birthPl.toLowerCase()}.</div>
     <button class="btn primary" onclick="openCattleForm()">+ Dodaj pierwsze zwierzę</button></div>`;
   const stado=state.cattle.filter(c=>c.status==='na stanie');
   const upcoming=[];
   stado.forEach(c=>{
     const ins=(c.inseminacje||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
     if(ins&&ins.data){
-      const due=new Date(ins.data); due.setDate(due.getDate()+CIAZA_DNI);
+      const due=new Date(ins.data); due.setDate(due.getDate()+S.gest);
       const lastWyc=(c.wycielenia||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
       if(!lastWyc || (lastWyc.data||'')<ins.data) upcoming.push({c,due});
     }
   });
   upcoming.sort((a,b)=>a.due-b.due);
   const upHtml=upcoming.length?`<div class="season" style="margin-bottom:22px"><div class="season-bar" style="background:var(--wheat)"></div>
-    <div style="padding:14px 18px"><div class="sb-title" style="margin-bottom:12px">🍼 Spodziewane wycielenia</div>
+    <div style="padding:14px 18px"><div class="sb-title" style="margin-bottom:12px">🍼 Spodziewane ${S.birthPl.toLowerCase()}</div>
     ${upcoming.map(u=>{ const days=Math.round((u.due-new Date())/86400000);
       return `<div class="kv"><span>${esc(u.c.kolczyk||'')}${u.c.imie?` · ${esc(u.c.imie)}`:''}</span>
         <b>${u.due.toLocaleDateString('pl-PL')} <span class="muted" style="font-weight:400">(${days>=0?'za '+days+' dni':Math.abs(days)+' dni temu'})</span></b></div>`;
     }).join('')}</div></div>`:'';
   const counts={};
   stado.forEach(c=>{ counts[c.plec]=(counts[c.plec]||0)+1; });
+  const sexTiles=S.sexes.slice(0,3).map(sx=>`<div class="mini-stat"><b class="num">${counts[sx]||0}</b><span>${esc(sx)}</span></div>`).join('');
   const stats=`<div class="mini-stats">
     <div class="mini-stat"><b class="num">${stado.length}</b><span>na stanie</span></div>
-    <div class="mini-stat"><b class="num">${counts.krowa||0}</b><span>krowy</span></div>
-    <div class="mini-stat"><b class="num">${counts['jałówka']||0}</b><span>jałówki</span></div>
-    <div class="mini-stat"><b class="num">${counts['cielę']||0}</b><span>cielęta</span></div>
+    ${sexTiles}
   </div>`;
   const rows=state.cattle.slice().sort((a,b)=>(a.status==='na stanie'?0:1)-(b.status==='na stanie'?0:1)).map(c=>{
     const off=c.status!=='na stanie';
@@ -1629,24 +1699,25 @@ function renderBydloModule(){
 }
 function goCattle(id){ view.module='bydlo'; view.cattleId=id; render(); window.scrollTo(0,0); }
 function renderCattleDetail(){
+  const S=sp();
   const c=state.cattle.find(x=>x.id===view.cattleId);
   if(!c){ view.cattleId=null; return renderBydloModule(); }
   const ins=(c.inseminacje||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   const wyc=(c.wycielenia||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   const insList=ins.length?ins.map(x=>`<div class="zabieg"><div class="z-kind" style="background:#5B8A93"></div>
-    <div class="z-main"><div class="z-name">${esc(x.nasienie||'inseminacja')}</div><div class="z-sub">${esc(x.data||'')}${x.uwagi?` · ${esc(x.uwagi)}`:''}</div></div>
-    <button class="x" onclick="delIns('${c.id}',${(c.inseminacje||[]).indexOf(x)})">×</button></div>`).join(''):`<div class="z-empty">Brak inseminacji.</div>`;
+    <div class="z-main"><div class="z-name">${esc(x.nasienie||S.breed.toLowerCase())}</div><div class="z-sub">${esc(x.data||'')}${x.uwagi?` · ${esc(x.uwagi)}`:''}</div></div>
+    <button class="x" onclick="delIns('${c.id}',${(c.inseminacje||[]).indexOf(x)})">×</button></div>`).join(''):`<div class="z-empty">Brak: ${S.breedPl.toLowerCase()}.</div>`;
   const wycList=wyc.length?wyc.map(x=>`<div class="zabieg"><div class="z-kind" style="background:var(--wheat)"></div>
-    <div class="z-main"><div class="z-name">Wycielenie${x.cielak?` — cielak ${esc(x.cielak)}`:''}</div><div class="z-sub">${esc(x.data||'')}${x.uwagi?` · ${esc(x.uwagi)}`:''}</div></div>
-    <button class="x" onclick="delWyc('${c.id}',${(c.wycielenia||[]).indexOf(x)})">×</button></div>`).join(''):`<div class="z-empty">Brak wycieleń.</div>`;
+    <div class="z-main"><div class="z-name">${S.birth}${x.cielak?` — ${S.young} ${esc(x.cielak)}`:''}</div><div class="z-sub">${esc(x.data||'')}${x.uwagi?` · ${esc(x.uwagi)}`:''}</div></div>
+    <button class="x" onclick="delWyc('${c.id}',${(c.wycielenia||[]).indexOf(x)})">×</button></div>`).join(''):`<div class="z-empty">Brak: ${S.birthPl.toLowerCase()}.</div>`;
   let due='';
   const lastIns=ins[0];
-  if(lastIns&&lastIns.data){ const d=new Date(lastIns.data); d.setDate(d.getDate()+CIAZA_DNI);
+  if(lastIns&&lastIns.data){ const d=new Date(lastIns.data); d.setDate(d.getDate()+S.gest);
     const lastW=wyc[0]; if(!lastW||(lastW.data||'')<lastIns.data){ const days=Math.round((d-new Date())/86400000);
-      due=`<div class="geo-note" style="margin-bottom:20px">🍼 Spodziewane wycielenie: <b>${d.toLocaleDateString('pl-PL')}</b> (${days>=0?'za '+days+' dni':Math.abs(days)+' dni temu'})</div>`; } }
+      due=`<div class="geo-note" style="margin-bottom:20px">🍼 Spodziewane ${S.birth.toLowerCase()}: <b>${d.toLocaleDateString('pl-PL')}</b> (${days>=0?'za '+days+' dni':Math.abs(days)+' dni temu'})</div>`; } }
   const off=c.status!=='na stanie';
   return `
-    <button class="btn ghost small" onclick="goModule('bydlo')" style="margin-bottom:14px">← Bydło</button>
+    <button class="btn ghost small" onclick="goModule('bydlo')" style="margin-bottom:14px">← ${S.label}</button>
     <div class="detail-head">
       <div><h1>${esc(c.kolczyk||'—')}${c.imie?` · ${esc(c.imie)}`:''}</h1>
         <div class="detail-meta">
@@ -1666,16 +1737,16 @@ function renderCattleDetail(){
     ${c.notatki?`<div class="geo-note" style="background:rgba(200,155,44,.12);border-color:rgba(200,155,44,.35);color:var(--ink);margin-bottom:20px">📝 ${esc(c.notatki)}</div>`:''}
     <div class="sb-grid">
       <div class="season" style="margin:0"><div class="season-bar" style="background:#5B8A93"></div><div style="padding:16px 18px">
-        <div class="sb-title">Inseminacje <button class="btn small" onclick="openInsForm('${c.id}')">+ Dodaj</button></div>
+        <div class="sb-title">${S.breedPl} <button class="btn small" onclick="openInsForm('${c.id}')">+ Dodaj</button></div>
         <div class="zabieg-list">${insList}</div></div></div>
       <div class="season" style="margin:0"><div class="season-bar" style="background:var(--wheat)"></div><div style="padding:16px 18px">
-        <div class="sb-title">Wycielenia <button class="btn small" onclick="openWycForm('${c.id}')">+ Dodaj</button></div>
+        <div class="sb-title">${S.birthPl} <button class="btn small" onclick="openWycForm('${c.id}')">+ Dodaj</button></div>
         <div class="zabieg-list">${wycList}</div></div></div>
     </div>`;
 }
 function openCattleForm(id){
   const c=id?state.cattle.find(x=>x.id===id):null;
-  const sexes=CATTLE_SEX.map(s=>`<option ${c&&c.plec===s?'selected':''}>${s}</option>`).join('');
+  const sexes=sp().sexes.map(s=>`<option ${c&&c.plec===s?'selected':''}>${s}</option>`).join('');
   openModal(`
     <div class="modal-head"><h3>${c?'Edytuj zwierzę':'Nowe zwierzę'}</h3><button class="x" onclick="closeModal()">×</button></div>
     <div class="modal-body">
@@ -1707,12 +1778,12 @@ function removeCattle(id){ const powod=prompt('Powód zdjęcia ze stanu (np. spr
 function restoreCattle(id){ const c=state.cattle.find(x=>x.id===id); c.status='na stanie'; delete c.data_zdjecia; save(); render(); }
 function openInsForm(cid){
   openModal(`
-    <div class="modal-head"><h3>Nowa inseminacja</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-head"><h3>${sp().breed} — nowy wpis</h3><button class="x" onclick="closeModal()">×</button></div>
     <div class="modal-body">
       <div class="field"><label>Data</label><input id="i_data" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
-      <div class="field"><label>Byk / nasienie</label><input id="i_nas" placeholder="np. Byk Danillo (HF)" autofocus></div>
+      <div class="field"><label>Samiec / nasienie</label><input id="i_nas" placeholder="np. rozpłodnik / nasienie" autofocus></div>
       <div class="field"><label>Uwagi</label><input id="i_uw" placeholder="np. 1. krycie"></div>
-      <div class="hint">Spodziewane wycielenie policzy się automatycznie (~${CIAZA_DNI} dni).</div>
+      <div class="hint">Spodziewane ${sp().birth.toLowerCase()} policzy się automatycznie (~${sp().gest} dni).</div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
       <button class="btn primary" onclick="saveIns('${cid}')">Dodaj</button></div>`);
@@ -1721,17 +1792,177 @@ function saveIns(cid){ const c=state.cattle.find(x=>x.id===cid); (c.inseminacje=
 function delIns(cid,idx){ const c=state.cattle.find(x=>x.id===cid); c.inseminacje.splice(idx,1); save(); render(); }
 function openWycForm(cid){
   openModal(`
-    <div class="modal-head"><h3>Nowe wycielenie</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-head"><h3>${sp().birth} — nowy wpis</h3><button class="x" onclick="closeModal()">×</button></div>
     <div class="modal-body">
       <div class="field"><label>Data</label><input id="w_data" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
-      <div class="field"><label>Kolczyk cielaka</label><input id="w_ciel" placeholder="opcjonalnie"></div>
-      <div class="field"><label>Uwagi</label><input id="w_uw" placeholder="np. jałówka, bez komplikacji"></div>
+      <div class="field"><label>Nr / oznaczenie (${esc(sp().young)})</label><input id="w_ciel" placeholder="opcjonalnie"></div>
+      <div class="field"><label>Uwagi</label><input id="w_uw" placeholder="np. bez komplikacji"></div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
       <button class="btn primary" onclick="saveWyc('${cid}')">Dodaj</button></div>`);
 }
 function saveWyc(cid){ const c=state.cattle.find(x=>x.id===cid); (c.wycielenia=c.wycielenia||[]).push({data:val('w_data'),cielak:val('w_ciel').trim(),uwagi:val('w_uw').trim()}); save(); closeModal(); render(); }
 function delWyc(cid,idx){ const c=state.cattle.find(x=>x.id===cid); c.wycielenia.splice(idx,1); save(); render(); }
+
+/* =========================================================
+   MODUŁ: USTAWIENIA
+   ========================================================= */
+const MODULE_LIST=[
+  {key:'flota',   name:'Flota',    emoji:'🚜', desc:'Maszyny, przeglądy, motogodziny'},
+  {key:'finanse', name:'Finanse',  emoji:'💰', desc:'Koszty i przychody miesiąc po miesiącu'},
+  {key:'hodowla', name:'Hodowla',  emoji:'🐄', desc:'Stado, krycia, porody (wybierz gatunek)'},
+  {key:'grafik',  name:'Grafik',   emoji:'📅', desc:'Grafik pracy i pracownicy'},
+];
+function renderUstawieniaModule(){
+  const S=sp();
+  const speciesCards=Object.entries(SPECIES).map(([k,v])=>{
+    const on=(state.settings.species||'bydlo')===k;
+    return `<button class="opt-card ${on?'sel':''}" onclick="setSpecies('${k}')">
+      <span class="opt-emoji">${v.emoji}</span><span class="opt-name">${v.label}</span></button>`;
+  }).join('');
+  const modToggles=MODULE_LIST.map(m=>{
+    const on=modOn(m.key);
+    return `<div class="set-row">
+      <div><div class="set-name">${m.emoji} ${m.name}</div><div class="set-desc">${m.desc}</div></div>
+      <button class="switch ${on?'on':''}" onclick="toggleModule('${m.key}')" aria-label="${m.name}"><span></span></button>
+    </div>`;
+  }).join('');
+  return `<div class="module-head"><div><h1>⚙️ Ustawienia</h1><div class="sub">Dopasuj aplikację do swojego gospodarstwa</div></div></div>
+
+    <div class="season" style="margin-bottom:20px"><div style="padding:18px 20px">
+      <div class="sb-title" style="margin-bottom:6px">Nazwa gospodarstwa</div>
+      <input class="set-input" value="${esc(state.farm.nazwa||'')}" onchange="setFarmName(this.value);render()" spellcheck="false">
+    </div></div>
+
+    <div class="season" style="margin-bottom:20px"><div style="padding:18px 20px">
+      <div class="sb-title" style="margin-bottom:4px">Gatunek hodowli</div>
+      <div class="set-desc" style="margin-bottom:14px">Moduł „Hodowla" dostosuje nazwy (krycia/porody, terminy, płcie). Wybrano: <b>${S.label}</b>.</div>
+      <div class="opt-grid">${speciesCards}</div>
+    </div></div>
+
+    <div class="season" style="margin-bottom:20px"><div style="padding:18px 20px">
+      <div class="sb-title" style="margin-bottom:14px">Moduły w menu</div>
+      ${modToggles}
+      <div class="set-desc" style="margin-top:10px">Pulpit i Pola są zawsze dostępne.</div>
+    </div></div>
+
+    <div class="season"><div style="padding:18px 20px">
+      <div class="sb-title" style="margin-bottom:10px">Konto</div>
+      <div class="set-row"><div><div class="set-name">${esc(currentEmail||'—')}</div><div class="set-desc">Zalogowany użytkownik</div></div>
+        <button class="btn small danger" onclick="logout()">Wyloguj</button></div>
+    </div></div>`;
+}
+function setSpecies(k){ state.settings.species=k; save(); render(); }
+function toggleModule(m){ state.settings.modules[m]=!modOn(m); save(); render(); }
+
+/* =========================================================
+   MODUŁ: GRAFIK (pracownicy + grafik pracy)
+   ========================================================= */
+const WORKER_COLORS=['#5E7F54','#4A90D9','#E8833A','#8E6FBE','#D9534F','#3DB4C4','#F0B13A','#57B657'];
+const DNI_TYG=['Pon','Wt','Śr','Czw','Pt','Sob','Nd'];
+function fmtISO(d){ d=new Date(d); const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+function monthStart(){ if(view.ym){ const [y,m]=view.ym.split('-').map(Number); return new Date(y,m-1,1); } const n=new Date(); return new Date(n.getFullYear(),n.getMonth(),1); }
+function goMonth(delta){ const d=monthStart(); d.setMonth(d.getMonth()+delta); view.ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); }
+function goThisMonth(){ const n=new Date(); view.ym=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; render(); }
+function workerById(id){ return state.workers.find(w=>w.id===id); }
+function renderGrafikModule(){
+  const head=`<div class="module-head"><div><h1>📅 Grafik</h1><div class="sub">Plan pracy i pracownicy</div></div>
+    <div class="spacer"></div><button class="btn" onclick="openWorkerForm()">+ Pracownik</button></div>`;
+  if(!state.workers.length){
+    return head+`<div class="empty-state"><div class="big">Brak pracowników</div>
+      <div style="margin-bottom:16px">Dodaj pracowników, a potem układaj im grafik w kalendarzu miesiąca.</div>
+      <button class="btn primary" onclick="openWorkerForm()">+ Dodaj pierwszego pracownika</button></div>`;
+  }
+  const first=monthStart();
+  const year=first.getFullYear(), month=first.getMonth();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const lead=(first.getDay()+6)%7;                 // ile pustych pól przed 1. (poniedziałek=0)
+  const todayISO=fmtISO(new Date());
+  const monthLabel=first.toLocaleDateString('pl-PL',{month:'long',year:'numeric'});
+  const entriesFor=iso=>state.schedule.filter(s=>s.date===iso).sort((a,b)=>(a.od||'').localeCompare(b.od||''));
+  const wpisyMc=state.schedule.filter(s=>{ const [y,m]=s.date.split('-'); return +y===year && +m===month+1; }).length;
+
+  // legenda pracowników
+  const legend=`<div class="wlegend">${state.workers.map(w=>`<span class="wchip" onclick="openWorkerForm('${w.id}')" title="Edytuj">
+    <span class="wdot" style="background:${w.kolor||'#5E7F54'}"></span>${esc(w.imie)}</span>`).join('')}</div>`;
+
+  const nav=`<div class="grafik-nav">
+    <button class="btn small" onclick="goMonth(-1)">← Poprzedni</button>
+    <div class="grafik-week">${monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1)} <button class="btn small ghost" onclick="goThisMonth()" style="margin-left:8px">Dziś</button></div>
+    <button class="btn small" onclick="goMonth(1)">Następny →</button>
+  </div>`;
+  const stats=`<div class="mini-stats" style="margin-bottom:16px">
+    <div class="mini-stat"><b class="num">${state.workers.length}</b><span>pracowników</span></div>
+    <div class="mini-stat"><b class="num">${wpisyMc}</b><span>wpisów w miesiącu</span></div>
+  </div>`;
+
+  // budowa komórek kalendarza (z wyrównaniem tygodni)
+  const cells=[];
+  for(let i=0;i<lead;i++) cells.push(`<td class="blank"></td>`);
+  for(let day=1;day<=daysInMonth;day++){
+    const iso=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const chips=entriesFor(iso).map(e=>{ const w=workerById(e.workerId); if(!w) return '';
+      return `<div class="shift" style="background:${w.kolor||'#5E7F54'}" onclick="event.stopPropagation();delShift('${e.id}')" title="Kliknij, aby usunąć">
+        <b>${esc(e.od||'')}${e.do?`–${esc(e.do)}`:''}</b><span>${esc(w.imie.split(' ')[0])}${e.zajecie?` · ${esc(e.zajecie)}`:''}</span></div>`;
+    }).join('');
+    cells.push(`<td class="${iso===todayISO?'today':''}" onclick="openShiftForm('${iso}')"><div class="cal-day">${day}</div>${chips}<div class="add-shift">+</div></td>`);
+  }
+  while(cells.length%7!==0) cells.push(`<td class="blank"></td>`);
+  let rows=''; for(let i=0;i<cells.length;i+=7) rows+=`<tr>${cells.slice(i,i+7).join('')}</tr>`;
+  const headCells=DNI_TYG.map(d=>`<th>${d}</th>`).join('');
+
+  return head+legend+stats+nav+`<div class="cal-wrap"><table class="cal">
+    <thead><tr>${headCells}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="set-desc" style="margin-top:10px">Kliknij dzień, aby dodać zmianę. Kliknij zmianę, aby ją usunąć.</div>`;
+}
+function openWorkerForm(id){
+  const w=id?state.workers.find(x=>x.id===id):null;
+  const colorDots=WORKER_COLORS.map(c=>`<button type="button" class="cdot ${w&&w.kolor===c?'sel':''}" style="background:${c}" onclick="pickWorkerColor(this,'${c}')"></button>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>${w?'Edytuj pracownika':'Nowy pracownik'}</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Imię i nazwisko</label><input id="w_imie" value="${w?esc(w.imie||''):''}" placeholder="np. Jan Kowalski" autofocus></div>
+      <div class="field row2"><div><label>Rola / stanowisko</label><input id="w_rola" value="${w?esc(w.rola||''):''}" placeholder="np. operator kombajnu"></div>
+        <div><label>Telefon</label><input id="w_tel" value="${w?esc(w.telefon||''):''}" placeholder="opcjonalnie"></div></div>
+      <div class="field"><label>Kolor w grafiku</label><div class="cdots" id="w_kolory">${colorDots}</div><input type="hidden" id="w_kolor" value="${w?w.kolor||WORKER_COLORS[0]:WORKER_COLORS[0]}"></div>
+    </div>
+    <div class="modal-foot">
+      ${w?`<button class="btn danger" onclick="delWorker('${w.id}')" style="margin-right:auto">Usuń</button>`:''}
+      <button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveWorker('${w?w.id:''}')">${w?'Zapisz':'Dodaj'}</button>
+    </div>`);
+}
+function pickWorkerColor(el,c){ document.querySelectorAll('#w_kolory .cdot').forEach(x=>x.classList.remove('sel')); el.classList.add('sel'); document.getElementById('w_kolor').value=c; }
+function saveWorker(id){
+  const imie=val('w_imie').trim(); if(!imie){ alert('Podaj imię pracownika.'); return; }
+  const data={imie,rola:val('w_rola').trim(),telefon:val('w_tel').trim(),kolor:val('w_kolor')||WORKER_COLORS[0]};
+  if(id){ Object.assign(state.workers.find(x=>x.id===id),data); }
+  else{ data.kolor=data.kolor||WORKER_COLORS[state.workers.length%WORKER_COLORS.length]; state.workers.push({id:uid(),...data}); }
+  save(); closeModal(); render();
+}
+function delWorker(id){ if(!confirm('Usunąć pracownika i jego wpisy w grafiku?'))return;
+  state.workers=state.workers.filter(x=>x.id!==id); state.schedule=state.schedule.filter(s=>s.workerId!==id); save(); closeModal(); render(); }
+function openShiftForm(iso,wid){
+  const [y,m,da]=iso.split('-').map(Number); const d=new Date(y,m-1,da);
+  const opts=state.workers.map(w=>`<option value="${w.id}" ${wid===w.id?'selected':''}>${esc(w.imie)}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>Nowa zmiana</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:12px">${d.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long'})}</div>
+      <div class="field"><label>Pracownik</label><select id="s_worker">${opts}</select></div>
+      <div class="field row2"><div><label>Od</label><input id="s_od" type="time" value="07:00"></div>
+        <div><label>Do</label><input id="s_do" type="time" value="15:00"></div></div>
+      <div class="field"><label>Zajęcie / miejsce</label><input id="s_zaj" placeholder="np. żniwa – pole Zagon" autofocus></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="saveShift('${iso}')">Dodaj</button></div>`);
+}
+function saveShift(iso){
+  const wid=val('s_worker'); if(!wid){ alert('Wybierz pracownika.'); return; }
+  state.schedule.push({id:uid(),workerId:wid,date:iso,od:val('s_od'),do:val('s_do'),zajecie:val('s_zaj').trim()});
+  save(); closeModal(); render();
+}
+function delShift(id){ state.schedule=state.schedule.filter(s=>s.id!==id); save(); render(); }
 
 /* =========================================================
    Formularze (modal)
