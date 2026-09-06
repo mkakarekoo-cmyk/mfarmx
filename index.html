@@ -144,7 +144,9 @@
   button{font-family:inherit}
 
   /* ---------- Layout: sidebar + treść ---------- */
-  .layout{display:flex;min-height:100vh}
+  /* ⚠️ 100vh, a nie calc(100vh - 52px), dawało stronę wyższą od okna o wysokość
+     topbara — stąd 52 px przewijania na każdym ekranie, mimo że treść się mieściła. */
+  .layout{display:flex;min-height:calc(100vh - 52px)}
   .sidebar{width:236px;flex-shrink:0;background:var(--color-sidebar);border-right:1px solid #0F1619;
     position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 14px;gap:4px;overflow-y:auto;z-index:1100}
   .sb-brand{display:flex;align-items:baseline;gap:8px;padding:4px 8px 16px;cursor:pointer;user-select:none}
@@ -511,6 +513,15 @@
 
   /* Pasek statystyk */
   .stat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px}
+  /* Poniżej ~1700 px osiem kafli w jednym rzędzie mieści się dopiero po zwężeniu.
+     Dwa rzędy zjadały 111 px wysokości, które zabierały je mapie. */
+  @media(max-width:1700px){
+    .stat-strip{grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:9px;margin-bottom:16px}
+    .stat-card{padding:11px 13px;gap:10px}
+    .stat-ic{width:32px;height:32px}
+    .stat-num{font-size:20px}
+    .stat-lab{font-size:11px}
+  }
   .stat-card{background:#fff;border:1px solid var(--line-strong);border-radius:8px;box-shadow:var(--shadow);padding:15px 18px;display:flex;align-items:center;gap:14px;transition:.14s;cursor:pointer}
   .stat-card:active{transform:translateY(0)}
   .stat-card:hover{box-shadow:0 6px 16px rgba(0,0,0,.10);transform:translateY(-2px)}
@@ -1062,8 +1073,33 @@
   .pulpit-akcje{display:flex;gap:8px;flex-wrap:wrap}
   .pulpit-uklad{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
   .pulpit-mapa{min-width:0}
-  .pulpit-mapa #map{height:clamp(560px,74vh,760px)}
-  .pulpit-mapa .map-off{height:clamp(560px,74vh,760px)}
+  /* ⚠️ NIE liczymy wysokości mapy arytmetyką typu calc(100vh - 268px). Próbowałem tak
+     i nie działa: pasek statystyk łamie się na 1, 1,5 albo 2 rzędy zależnie od szerokości
+     okna (77 / 95 / 113 / 199 px), więc każda stała była zła przy części rozdzielczości.
+
+     Zamiast tego Pulpit jest kolumną o wysokości okna, a mapa dostaje flex:1 —
+     wypełnia dokładnie to, co zostanie po nagłówku i statystykach, ile by ich nie było.
+     min-height:0 jest konieczne, bo bez niego element flex nie skurczy się poniżej
+     swojej treści i mapa i tak wypchnęłaby stronę. */
+  .content.pulpit-pelny{display:flex;flex-direction:column;height:calc(100vh - 52px);overflow:hidden}
+  /* ⚠️ align-items:start z reguły bazowej sprawiał, że kolumny siatki miały wysokość
+     swojej treści — mapa kurczyła się do min-height 240 px zamiast rosnąć. */
+  .content.pulpit-pelny .pulpit-uklad{flex:1;min-height:0;align-items:stretch}
+  .content.pulpit-pelny .pulpit-mapa{display:flex;flex-direction:column;min-height:0}
+  .content.pulpit-pelny .pulpit-mapa #map,
+  .content.pulpit-pelny .pulpit-mapa .map-off{flex:1;min-height:240px;height:auto}
+  .content.pulpit-pelny .panel-op{max-height:100%;position:static}
+  /* Podpowiedź pod mapą zabiera wysokość, której mapa potrzebuje bardziej. */
+  .content.pulpit-pelny .map-hint{margin-top:7px;flex-shrink:0}
+  @media(max-height:700px){ .content.pulpit-pelny .map-hint{display:none} }
+
+  /* Poniżej 1180 px panel schodzi pod mapę i wtedy przewijanie jest nieuniknione —
+     wyłączamy tryb pełnoekranowy, żeby dało się dojechać do panelu. */
+  @media(max-width:1180px){
+    .content.pulpit-pelny{display:block;height:auto;overflow:visible}
+    .content.pulpit-pelny .pulpit-mapa #map,
+    .content.pulpit-pelny .pulpit-mapa .map-off{height:clamp(360px,58vh,520px);flex:none}
+  }
 
   /* Panel operacyjny — sekcje zwijane, stan pamiętany w `state.ui.pulpit.otwarte`. */
   .panel-op{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto;
@@ -1123,9 +1159,10 @@
   .pf-akcje button:hover{border-color:var(--pole);color:var(--pole)}
   .pf-akcje button.gl{background:var(--pole);border-color:var(--pole);color:#fff}
 
-  /* Poniżej ~1400 px panel schodzi pod mapę. Przy węższym ekranie sidebar + panel 360 px
-     zostawiają mapie ok. 700 px — prawie kwadrat, w którym pola przestają być czytelne. */
-  @media(max-width:1400px){
+  /* Panel zwęża się, zamiast od razu spadać pod mapę: przy 1366 px zejście w dół
+     wydłużało stronę o 742 px i wymuszało przewijanie, co jest gorsze niż węższa mapa. */
+  @media(max-width:1560px){ .pulpit-uklad{grid-template-columns:minmax(0,1fr) 320px} }
+  @media(max-width:1180px){
     .pulpit-uklad{grid-template-columns:1fr}
     .panel-op{position:static;max-height:none}
     .op-akt{max-height:none}
@@ -1689,6 +1726,17 @@
   .pole-mini svg{position:absolute;inset:0;width:100%;height:100%;display:block}
   @media(min-width:1600px){ .pole-mini{width:76px;height:50px} }
 </style>
+  <!-- ═══ Instalacja na telefonie (PWA) ═══════════════════════════════════════
+       Po dodaniu do ekranu głównego aplikacja otwiera się bez paska przeglądarki
+       i działa bez zasięgu (service worker trzyma zapasową kopię szkieletu).
+       ⚠️ Wymaga HTTPS — na localhost działa, przez file:// nie zadziała. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#142329">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="M-FarmX">
+  <link rel="apple-touch-icon" href="icons/app-192.png">
 </head>
 <body>
 
@@ -2434,7 +2482,7 @@ function render(){
   else if(view.module==='todo') content=renderTodoModule();
   else if(view.module==='skup') content=renderSkupModule();
 
-  document.getElementById('app').innerHTML=`${renderNavbar()}<div class="layout${view.sidebarCollapsed?' collapsed':''}">${renderSidebar()}<main class="content${pelnaSzerokosc()?' pelna':''}">${content}</main></div>`;
+  document.getElementById('app').innerHTML=`${renderNavbar()}<div class="layout${view.sidebarCollapsed?' collapsed':''}">${renderSidebar()}<main class="content${pelnaSzerokosc()?' pelna':''}${view.module==='pulpit'?' pulpit-pelny':''}">${content}</main></div>`;
 
   // Lista kont wczytuje się przy pierwszym wejściu w moduł; potem odświeżamy ją po każdej zmianie.
   if(view.module==='uzytkownicy' && _uzytkownicy===null) setTimeout(odswiezUzytkownikow,0);
@@ -3237,6 +3285,55 @@ function usunZgloszenie(id){
    Tryb lokalny pracuje na własnym kluczu `myagro.skup.demo` — osobnym od danych
    gospodarstwa i jawnie oznaczonym jako demo. Na produkcji brak tabel = wyraźny
    komunikat, nigdy cichy zapis w przeglądarce. */
+
+/* ═══ INSTALACJA NA TELEFONIE ══════════════════════════════════════════════════
+   Przeglądarka pokazuje własny monit o instalację tylko czasem i łatwo go przeoczyć,
+   dlatego przechwytujemy zdarzenie i dajemy własny przycisk w Ustawieniach.
+   ⚠️ Na iPhonie nie ma `beforeinstallprompt` — tam instaluje się ręcznie przez
+   Udostępnij → Do ekranu początkowego. Podpowiadamy to zamiast pokazywać przycisk,
+   który i tak by nie zadziałał. */
+let monitInstalacji = null;
+const jestIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const juzZainstalowana = () => window.matchMedia('(display-mode: standalone)').matches
+  || window.navigator.standalone === true;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();          // bez tego przeglądarka pokaże własny pasek w swoim momencie
+  monitInstalacji = e;
+  const b = document.getElementById('btnInstaluj');
+  if (b) b.style.display = 'inline-flex';
+});
+window.addEventListener('appinstalled', () => {
+  monitInstalacji = null;
+  showToast('Aplikacja zainstalowana.');
+});
+
+async function zainstalujAplikacje(){
+  if (juzZainstalowana()) { showToast('Aplikacja jest już zainstalowana.'); return; }
+  if (monitInstalacji) {
+    monitInstalacji.prompt();
+    const { outcome } = await monitInstalacji.userChoice;
+    monitInstalacji = null;
+    if (outcome !== 'accepted') showToast('Instalacja anulowana.');
+    return;
+  }
+  // Brak monitu: iPhone albo przeglądarka, która go nie oferuje.
+  alert(jestIOS()
+    ? 'Na iPhonie:\n\n1. Naciśnij ikonę Udostępnij (kwadrat ze strzałką w górę)\n'
+      + '2. Wybierz „Do ekranu początkowego"\n3. Potwierdź „Dodaj"'
+    : 'W przeglądarce:\n\n1. Otwórz menu (trzy kropki)\n'
+      + '2. Wybierz „Zainstaluj aplikację" albo „Dodaj do ekranu głównego"\n\n'
+      + 'Jeśli tej opcji nie ma — aplikacja musi być otwarta przez HTTPS, nie z pliku na dysku.');
+}
+
+/* Service worker rejestrujemy dopiero po załadowaniu strony, żeby nie konkurował
+   o łącze z pierwszym renderowaniem. Na file:// nie zadziała i to jest w porządku. */
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {/* brak SW nie psuje aplikacji */});
+  });
+}
 
 const SKUP_KLUCZ = 'myagro.skup.demo';
 const PRODUKTY_DOMYSLNE = ['Kukurydza','Pszenica','Rzepak','Jęczmień','Żyto','Owies','Pszenżyto','Soja','Inne'];
@@ -4398,6 +4495,11 @@ function initMap(){
     } else if(maSiedzibe()){
       LMAP.setView([state.farm.lat,state.farm.lng], state.farm.zoom||15);
     }
+  }
+  // Mapa rośnie i maleje razem z oknem (flex), a Leaflet sam tego nie zauważa.
+  if(window.ResizeObserver && !LMAP._obserwator){
+    LMAP._obserwator=new ResizeObserver(()=>{ try{ LMAP.invalidateSize(); }catch(e){} });
+    LMAP._obserwator.observe(el);
   }
   rysujSiedzibe();
   rysujMaszynyNaMapie();   // znaczniki z aktywnych zadań — patrz blok INTEGRACJA
@@ -6071,6 +6173,19 @@ function renderUstawieniaModule(){
     </div></div>
 
     <div class="season"><div style="padding:18px 20px">
+      <div class="sb-title" style="margin-bottom:10px">Aplikacja na telefonie</div>
+      <div class="set-row">
+        <div><div class="set-name">Zainstaluj na urządzeniu</div>
+          <div class="set-desc">Aplikacja doda się do ekranu głównego i będzie otwierać się
+            bez paska przeglądarki. Zadziała też bez zasięgu — dane synchronizują się
+            po odzyskaniu połączenia.</div></div>
+        <button class="btn small primary" id="btnInstaluj" onclick="zainstalujAplikacje()"
+          style="${juzZainstalowana()?'display:none':''}">Zainstaluj</button>
+      </div>
+      ${juzZainstalowana()?`<div class="set-desc" style="color:var(--color-success)">✓ Aplikacja jest zainstalowana na tym urządzeniu.</div>`:''}
+    </div></div>
+
+    <div class="season" style="margin-top:20px"><div style="padding:18px 20px">
       <div class="sb-title" style="margin-bottom:10px">Konto</div>
       <div class="set-row"><div><div class="set-name">${esc(currentEmail||'—')}</div><div class="set-desc">Zalogowany użytkownik</div></div>
         <button class="btn small danger" onclick="logout()">Wyloguj</button></div>

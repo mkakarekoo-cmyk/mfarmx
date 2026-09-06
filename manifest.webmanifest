@@ -1,0 +1,24 @@
+{
+  "name": "M-FarmX — zarządzanie gospodarstwem",
+  "short_name": "M-FarmX",
+  "description": "Pola, flota, grafik pracy, skup zboża i finanse gospodarstwa rolnego.",
+  "lang": "pl",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F6F7F5",
+  "theme_color": "#142329",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    { "src": "icons/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/app-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Grafik", "short_name": "Grafik", "url": "./?skrot=grafik" },
+    { "name": "Dodaj pole", "short_name": "Pole", "url": "./?skrot=nowePole" },
+    { "name": "Przyjęcie zboża", "short_name": "Przyjęcie", "url": "./?skrot=przyjecie" }
+  ]
+}
