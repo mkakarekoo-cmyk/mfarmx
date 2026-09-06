@@ -10,3 +10,6 @@ backups/
 Thumbs.db
 .DS_Store
 *.log
+
+# Notatki robocze i dokumentacja wewnętrzna zostają w repo — to część projektu.
+# Nic z danymi gospodarstwa nie może tu trafić: backups/ i *.json są wyżej.
