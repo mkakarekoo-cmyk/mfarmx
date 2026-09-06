@@ -1693,20 +1693,25 @@
      błękitu wyraźny granat. */
   /* Cztery drop-shadow „rozlewają" linię o piksel w każdą stronę — kreska 1 px staje się
      widoczną, 3-pikselową miedzą. Kontrast i nasycenie zamieniają blady błękit w granat. */
+  /* ⚠️ KAŻDY drop-shadow to osobne przejście po całej powierzchni kafla. Przy ośmiu
+     cieniach przeciąganie mapy spadało do ~10 klatek na sekundę (zmierzone: mediana
+     100 ms na klatkę, najgorsza 150 ms) — mapa dosłownie nie dawała się przesuwać.
+     Dwa cienie po przekątnej daja praktycznie ten sam efekt pogrubienia co cztery
+     w pionie i poziomie, bo granice działek rzadko biegną idealnie prosto. */
   .warstwa-dzialki{
     filter:contrast(3) saturate(3) brightness(.6) hue-rotate(-10deg)
-      drop-shadow(1px 0 0 #1B3A5C) drop-shadow(-1px 0 0 #1B3A5C)
-      drop-shadow(0 1px 0 #1B3A5C) drop-shadow(0 -1px 0 #1B3A5C);
+      drop-shadow(1px 1px 0 #1B3A5C) drop-shadow(-1px -1px 0 #1B3A5C);
   }
-  /* Mocniejszy kontur: drugi pierścień cieni (łącznie ok. 5 px) — na ciemnym zbożu
-     albo na zaoranej ziemi dopiero to widać. */
   .mocne-dzialki .warstwa-dzialki{
-    filter:contrast(3.4) saturate(3.4) brightness(.45) hue-rotate(-10deg)
-      drop-shadow(1px 0 0 #10293F) drop-shadow(-1px 0 0 #10293F)
-      drop-shadow(0 1px 0 #10293F) drop-shadow(0 -1px 0 #10293F)
-      drop-shadow(2px 0 0 #10293F) drop-shadow(-2px 0 0 #10293F)
-      drop-shadow(0 2px 0 #10293F) drop-shadow(0 -2px 0 #10293F);
+    filter:contrast(3.4) saturate(3.4) brightness(.42) hue-rotate(-10deg)
+      drop-shadow(1.5px 1.5px 0 #10293F) drop-shadow(-1.5px -1.5px 0 #10293F)
+      drop-shadow(1.5px -1.5px 0 #10293F) drop-shadow(-1.5px 1.5px 0 #10293F);
   }
+  /* ⚠️ W TRAKCIE PRZESUWANIA zdejmujemy filtry całkowicie. Przeglądarka przelicza je
+     przy każdej klatce, a podczas ruchu i tak nikt nie studiuje granic działek —
+     liczy się płynność. Wracają w chwili puszczenia mapy. */
+  .mapa-rusza .warstwa-dzialki,
+  .mapa-rusza .leaflet-tile-pane .leaflet-layer{filter:none!important}
   /* Podkład przygaszamy TYLKO przy włączonych działkach — sam w sobie ma być jasny. */
   /* ⚠️ Przygaszamy WYŁĄCZNIE podkład. Wcześniej wykluczenie wskazywało klasę
      .warstwa-dzialki-wrap, która nigdy nie istniała — więc reguła łapała też warstwę
@@ -5035,6 +5040,15 @@ function wlaczWarstwy(mapa){
   };
   stan.zastosuj();
   panelWarstw(mapa, stan);
+
+  /* Filtry granic działek są kosztowne (kilka przejść po każdym kaflu), więc na czas
+     przeciągania i przybliżania je wyłączamy. Bez tego mapa z „mocniejszym konturem"
+     chodziła w ~10 klatkach na sekundę. */
+  const k=mapa.getContainer();
+  const wRuchu=()=>k.classList.add('mapa-rusza');
+  const stop=()=>k.classList.remove('mapa-rusza');
+  mapa.on('movestart zoomstart dragstart', wRuchu);
+  mapa.on('moveend zoomend dragend', stop);
   mapa.on('zoomend',()=>{ if(stan.panel){
     const i=stan.panel.querySelector('.mw-info');
     if(i) i.classList.toggle('ukryte', mapa.getZoom()>=ZOOM_DZIALEK);
