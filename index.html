@@ -1966,6 +1966,43 @@
     /* Przełącznik Tabela/Kafelki nie ma sensu tam, gdzie i tak wymuszamy karty. */
     .tbar-r{display:none}
   }
+
+  @media(max-width:767px){
+    /* ⚠️ NAPRAWA SZUFLADY. Sidebar dostal position:fixed i kolumne, ale .sb-nav i .sb-item
+       nadal lapaly reguly starego POZIOMEGO paska ikon z bloku max-width:900px:
+       flex-direction:row, overflow-x:auto i rozciaganie na pelna wysokosc. Efekt: pozycje
+       ustawialy sie w rzedzie o lacznej szerokosci 2798 px, wiec w szufladzie widac bylo
+       tylko "Pulpit" rozciagniety na cala wysokosc, a reszta byla poza ekranem.
+       Blok ponizej jawnie cofa tamte reguly — nie wystarczy stylowac samego .sidebar. */
+    .sb-nav{flex-direction:column!important;flex:1 1 auto!important;
+      overflow-x:visible!important;overflow-y:auto;max-width:none!important;gap:3px}
+    .sb-item{flex:0 0 auto!important;width:100%!important;height:auto!important;
+      align-self:stretch;justify-content:flex-start;white-space:normal}
+    .sb-item .lbl{display:inline!important}
+    .sb-sep{width:auto!important;height:1px!important;margin:10px 4px!important}
+  }
+
+  @media(max-width:767px){
+    /* align-items:center to kolejna pozostalosc po poziomym pasku — w kolumnie zwezala
+       liste do szerokosci najdluzszej etykiety (146 px w 300-pikselowej szufladzie),
+       a stopke z kontem sciskala do zera. */
+    .sidebar{align-items:stretch!important}
+    .sb-foot{width:auto!important;flex:0 0 auto!important;display:flex!important;
+      margin-top:auto;padding-top:14px}
+    .sb-user,.sb-backup,.sb-wer{width:100%}
+  }
+
+  @media(max-width:767px){
+    /* Stopka szuflady wychodzila poza jej szerokosc (348 px w szufladzie 300 px)
+       i chowala sie pod dolna nawigacja. Ograniczamy szerokosc i robimy miejsce na pasek. */
+    .sidebar{padding-bottom:calc(80px + env(safe-area-inset-bottom))!important;
+      box-sizing:border-box}
+    .sb-foot{max-width:100%;box-sizing:border-box}
+    .sb-foot>*{max-width:100%;box-sizing:border-box}
+    .sb-backup{display:flex;gap:7px}
+    .sb-backup .btn{flex:1;min-width:0;justify-content:center}
+    .sb-farm{max-width:100%;box-sizing:border-box}
+  }
 </style>
   <!-- ═══ Instalacja na telefonie (PWA) ═══════════════════════════════════════
        Po dodaniu do ekranu głównego aplikacja otwiera się bez paska przeglądarki
