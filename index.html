@@ -4954,6 +4954,19 @@ let warstwaSiedziby=null;
 const GUGIK_URL='https://integracja.gugik.gov.pl/cgi-bin/KrajowaIntegracjaEwidencjiGruntow';
 const ZOOM_DZIALEK=15;
 
+/* ⚠️ ORTOFOTOMAPA GUGiK JEST DOMYŚLNA. Esri World Imagery dla polskiej wsi bywa sprzed
+   kilku lat i wyraźnie mniej ostra — porównanie tego samego miejsca pokazało inny nalot,
+   inne uprawy na polach i inne kolory dachów. Ortofoto krajowe jest nowsze, ostrzejsze
+   i pochodzi z tej samej instytucji, z której bierzemy granice działek.
+
+   ⚠️ GUGiK POKRYWA WYŁĄCZNIE POLSKĘ. Poza granicami kafle będą puste — dlatego Esri
+   zostaje jako podkład zapasowy i nie wolno go usuwać. */
+function podkladOrto(){
+  return L.tileLayer('https://mapy.geoportal.gov.pl/wss/service/PZGIK/ORTO/WMTS/StandardResolution'
+    +'?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTOFOTOMAPA&STYLE=default'
+    +'&FORMAT=image/jpeg&TILEMATRIXSET=EPSG:3857&TILEMATRIX=EPSG:3857:{z}&TILEROW={y}&TILECOL={x}',
+    {maxZoom:21, maxNativeZoom:20, attribution:'Ortofotomapa: GUGiK'});
+}
 function podkladSatelita(){
   return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     {maxZoom:19,maxNativeZoom:18,attribution:'Zdjęcia: Esri, Maxar'});
@@ -4992,8 +5005,12 @@ function panelWarstw(mapa, stan){
       const d=L.DomUtil.create('div','mapa-warstwy');
       d.innerHTML=`
         <div class="mw-grupa">
-          <button class="mw-b${stan.podklad==='satelita'?' akt':''}" data-p="satelita">Satelita</button>
-          <button class="mw-b${stan.podklad==='mapa'?' akt':''}" data-p="mapa">Mapa</button>
+          <button class="mw-b${stan.podklad==='orto'?' akt':''}" data-p="orto"
+            title="Ortofotomapa GUGiK — najnowsze zdjęcia lotnicze dla Polski">Ortofoto</button>
+          <button class="mw-b${stan.podklad==='satelita'?' akt':''}" data-p="satelita"
+            title="Esri World Imagery — pokrycie światowe, starsze dla Polski">Satelita</button>
+          <button class="mw-b${stan.podklad==='mapa'?' akt':''}" data-p="mapa"
+            title="Mapa OpenStreetMap">Mapa</button>
         </div>
         <label class="mw-chk"><input type="checkbox" ${stan.dzialki?'checked':''} data-dz="1">
           <span>Granice działek</span></label>
@@ -5014,7 +5031,11 @@ function panelWarstw(mapa, stan){
 /* Wspólna obsługa warstw dla obu map (Pulpit i „Nowe pole"). Stan trafia do
    `state.ui.mapaWarstwy`, więc wybór przeżywa przejście między ekranami. */
 function wlaczWarstwy(mapa){
-  state.ui.mapaWarstwy=Object.assign({podklad:'satelita', dzialki:false, mocne:false}, state.ui.mapaWarstwy||{});
+  state.ui.mapaWarstwy=Object.assign({podklad:'orto', dzialki:false, mocne:false}, state.ui.mapaWarstwy||{});
+  // Kto miał zapamiętane Esri sprzed dodania ortofoto, dostaje nowszy podkład raz.
+  if(!state.ui.mapaWarstwy.ortoZaproponowane){
+    state.ui.mapaWarstwy.podklad='orto'; state.ui.mapaWarstwy.ortoZaproponowane=true;
+  }
   const u=state.ui.mapaWarstwy;
   const stan={podklad:u.podklad, dzialki:u.dzialki, mocne:u.mocne, panel:null, warstwy:{}};
 
@@ -5022,7 +5043,14 @@ function wlaczWarstwy(mapa){
     Object.values(stan.warstwy).forEach(w=>{ if(w) try{ mapa.removeLayer(w); }catch(e){} });
     stan.warstwy={};
     if(stan.podklad==='mapa'){ stan.warstwy.b=podkladMapa().addTo(mapa); }
-    else { stan.warstwy.b=podkladSatelita().addTo(mapa); stan.warstwy.n=podkladNazwy().addTo(mapa); }
+    else if(stan.podklad==='satelita'){ stan.warstwy.b=podkladSatelita().addTo(mapa); stan.warstwy.n=podkladNazwy().addTo(mapa); }
+    else {
+      /* Ortofoto GUGiK kończy się na granicy Polski, więc pod spodem zostawiamy Esri —
+         inaczej za granicą użytkownik zobaczyłby puste, szare kafle bez wyjaśnienia. */
+      stan.warstwy.z=podkladSatelita().addTo(mapa);
+      stan.warstwy.b=podkladOrto().addTo(mapa);
+      stan.warstwy.n=podkladNazwy().addTo(mapa);
+    }
     if(stan.dzialki) stan.warstwy.d=warstwaDzialek().addTo(mapa);
     // Przygaszamy zdjęcie tylko przy włączonych działkach — samo w sobie ma być jasne.
     const kontener=mapa.getContainer();
@@ -5485,7 +5513,9 @@ function initMiniMap(){
   if(MINI_MAP){ try{MINI_MAP.remove();}catch(e){} MINI_MAP=null; }
   const m=L.map(el,{zoomControl:true,attributionControl:false});
   MINI_MAP=m;
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19}).addTo(m);
+  // Ten sam podkład co na Pulpicie — ortofoto GUGiK nad Esri jako zapasem.
+  podkladSatelita().addTo(m);
+  podkladOrto().addTo(m);
   const last=latestSeason(f), col=cropColor(last&&last.uprawa);
   /* Obrys BEZ wypełnienia, gdy pod spodem leży zdjęcie — półprzezroczysta plama
      zafałszowałaby kolory NDVI, które właśnie przyszliśmy obejrzeć. */
