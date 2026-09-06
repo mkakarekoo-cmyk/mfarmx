@@ -1725,6 +1725,247 @@
   .pole-mini img.nieudane{display:none}   /* brak sieci — zostaje sam obrys na tle */
   .pole-mini svg{position:absolute;inset:0;width:100%;height:100%;display:block}
   @media(min-width:1600px){ .pole-mini{width:76px;height:50px} }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     MOBILE — powłoka aplikacji
+     Poniżej 768 px aplikacja przechodzi na własny układ, a nie zmniejszony desktop.
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .dolna-nawigacja{display:none}
+  .zaslona{display:none}
+
+  @media(max-width:767px){
+    /* Sidebar jako szuflada — poziomy pasek ikon nie mieścił etykiet i nie dawał
+       się przewijać kciukiem bez przypadkowego klikania. */
+    .sidebar{position:fixed;top:52px;left:0;bottom:0;width:min(80vw,300px);
+      height:auto;flex-direction:column;padding:14px 12px;gap:2px;z-index:1200;
+      transform:translateX(-102%);transition:transform .22s ease;overflow-y:auto;
+      box-shadow:6px 0 24px rgba(20,35,41,.28)}
+    .layout.menu-otwarte .sidebar{transform:translateX(0)}
+    .layout.collapsed .sidebar{display:flex}
+    .zaslona{display:block;position:fixed;inset:52px 0 0;background:rgba(20,35,41,.5);
+      opacity:0;pointer-events:none;transition:opacity .2s;z-index:1150}
+    .layout.menu-otwarte .zaslona{opacity:1;pointer-events:auto}
+    .sb-item{width:100%;padding:11px 12px}
+    .sb-item .lbl{display:inline}
+    .sb-brand{display:none}
+
+    /* Treść nad dolnym paskiem — inaczej ostatni wiersz chowa się pod nim. */
+    .content{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+    .content.pelna{padding:14px 12px calc(74px + env(safe-area-inset-bottom))}
+
+    /* ── Dolna nawigacja ────────────────────────────────────────────────────
+       Cele dotykowe 56 px wysokości: przy rękawicach i w ruchu mniejsze się nie trafia. */
+    .dolna-nawigacja{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:1300;
+      background:var(--surface);border-top:1px solid var(--border);
+      padding-bottom:env(safe-area-inset-bottom);
+      box-shadow:0 -2px 12px rgba(20,35,41,.08)}
+    .dn-p{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:3px;background:none;border:none;cursor:pointer;
+      padding:9px 2px 8px;font-family:var(--sans);font-size:10.5px;color:var(--color-text-muted);
+      min-height:56px}
+    .dn-p span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+    .dn-p.akt{color:var(--primary);font-weight:600}
+    .dn-ik{position:relative;display:flex}
+    .dn-ik svg{width:22px;height:22px}
+    .dn-kropka{position:absolute;top:-4px;right:-8px;background:var(--accent);color:#1F2A2E;
+      border-radius:99px;min-width:16px;height:16px;font-size:10px;font-weight:700;
+      display:flex;align-items:center;justify-content:center;padding:0 4px}
+    /* Środkowy przycisk wystaje ponad pasek — jest najczęściej używany. */
+    .dn-plus{flex:0 0 62px;display:flex;align-items:center;justify-content:center;
+      background:none;border:none;cursor:pointer}
+    .dn-plus svg{width:26px;height:26px;color:#fff}
+    .dn-plus::before{content:'';position:absolute;width:52px;height:52px;border-radius:50%;
+      background:var(--primary);box-shadow:0 3px 12px rgba(40,122,75,.4);margin-top:-16px}
+    .dn-plus svg{position:relative;margin-top:-16px}
+
+    /* Szybkie akcje */
+    .szybkie{display:grid;grid-template-columns:1fr;gap:8px}
+    .sz-p{display:flex;align-items:center;gap:13px;padding:15px 16px;background:var(--surface);
+      border:1px solid var(--border);border-radius:var(--radius-md);cursor:pointer;
+      font-family:var(--sans);font-size:15px;font-weight:600;color:var(--color-text);
+      text-align:left;min-height:56px}
+    .sz-p:active{background:var(--primary-soft);border-color:var(--primary)}
+    .sz-ik{color:var(--primary);display:flex;flex-shrink:0}
+    .sz-ik svg{width:22px;height:22px}
+
+    /* Topbar niski, bez zbędnych elementów */
+    .navbar{height:52px;padding:0 8px;gap:6px}
+    .nav-logo .nl-t{display:inline;font-size:15px}
+    .nav-szukaj{display:none}          /* wyszukiwanie żyje w module „Więcej" */
+    .navbar .nav-season select{max-width:74px}
+
+    /* ── Modale jako arkusz wysuwany od dołu ────────────────────────────────
+       Małe okienko pośrodku telefonu jest trudne do trafienia i zasłania kontekst. */
+    .overlay.on{align-items:flex-end}
+    .modal{width:100%;max-width:none;max-height:92vh;border-radius:16px 16px 0 0;
+      padding-bottom:env(safe-area-inset-bottom);animation:wysun .2s ease}
+    @keyframes wysun{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .modal-head{position:sticky;top:0;z-index:2;background:var(--surface);
+      border-radius:16px 16px 0 0}
+    .modal-head::before{content:'';position:absolute;top:7px;left:50%;transform:translateX(-50%);
+      width:38px;height:4px;border-radius:2px;background:var(--border)}
+    .modal-head h3{margin-top:8px}
+    /* Zapisz zawsze widoczny — w długim formularzu nie trzeba go szukać przewijaniem. */
+    .modal-foot{position:sticky;bottom:0;background:var(--surface);
+      border-top:1px solid var(--border);padding:11px 16px;gap:8px}
+    .modal-foot .btn{flex:1;justify-content:center;min-height:46px}
+
+    /* ── Formularze: jedna kolumna, duże pola ───────────────────────────────── */
+    .field.row2,.field.row3{grid-template-columns:1fr;gap:12px}
+    .field{margin-bottom:13px}
+    .field label{font-size:12.5px;font-weight:600}
+    .field input,.field select,.field textarea{min-height:46px;font-size:16px}
+    /* 16px to nie estetyka: przy mniejszym iOS sam przybliża stronę przy wejściu w pole. */
+    .btn{min-height:44px}
+  }
+
+  @media(max-width:767px) and (display-mode:standalone){
+    /* Zainstalowana z ekranu głównego — nie ma paska przeglądarki, dokładamy wcięcie. */
+    .navbar{padding-top:env(safe-area-inset-top);height:calc(52px + env(safe-area-inset-top))}
+    .sidebar,.zaslona{top:calc(52px + env(safe-area-inset-top))}
+  }
+
+  @media(max-width:767px){
+    /* ── Karty pól ─────────────────────────────────────────────────────────── */
+    .pola-karty,.flota-karty,.gd-lista{display:flex;flex-direction:column;gap:10px}
+    .pk,.fk,.gd-karta{background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius-md);padding:13px 14px;box-shadow:var(--shadow-sm);cursor:pointer}
+    .pk:active,.fk:active,.gd-karta:active{background:var(--surface-secondary)}
+    .pk-gora,.fk-gora{display:flex;align-items:center;gap:12px}
+    .pk-gora .pole-mini{display:block;width:58px;height:40px}
+    .pk-tyt,.fk-tyt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.35}
+    .pk-tyt b,.fk-tyt b{font-size:15.5px;font-weight:600;overflow:hidden;
+      text-overflow:ellipsis;white-space:nowrap}
+    .pk-tyt span,.fk-tyt span{font-size:12.5px;color:var(--color-text-muted);
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .pk-uprawa{display:flex;align-items:center;gap:9px;margin:11px 0 0;flex-wrap:wrap}
+    .pk-odm{font-size:12.5px;color:var(--color-text-muted)}
+    .pk-dane,.fk-dane{display:flex;gap:8px;margin-top:11px;padding-top:11px;
+      border-top:1px solid var(--border-light)}
+    .pk-dane span,.fk-dane span{flex:1;min-width:0;display:flex;flex-direction:column;
+      font-size:11px;color:var(--color-text-muted)}
+    .pk-dane b,.fk-dane b{font-size:14px;color:var(--color-text);font-weight:600;
+      font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fk-dane .pilne b{color:var(--color-danger)}
+
+    /* ── Karty floty ───────────────────────────────────────────────────────── */
+    .fk-ik{font-size:24px;flex-shrink:0}
+    .fk-stan{font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0}
+    .fk-praca{margin-top:10px;padding:9px 11px;background:var(--surface-secondary);
+      border-radius:var(--radius-sm);display:flex;flex-direction:column;line-height:1.4}
+    .fk-praca b{font-size:13.5px;font-weight:600}
+    .fk-praca span{font-size:12px;color:var(--color-text-muted)}
+
+    /* ── Grafik: widok dnia ────────────────────────────────────────────────── */
+    .gd-pasek{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .gd-pasek .kropki{width:44px;height:44px;font-size:20px;flex-shrink:0}
+    .gd-data{flex:1;text-align:center;display:flex;flex-direction:column;line-height:1.25}
+    .gd-data b{font-size:17px;font-weight:700;text-transform:capitalize}
+    .gd-data span{font-size:12.5px;color:var(--color-text-muted)}
+    .gd-karta{border-left:4px solid var(--primary);padding:12px 13px}
+    .gd-gora{display:flex;gap:12px;align-items:flex-start}
+    .gd-czas{display:flex;flex-direction:column;font-family:var(--mono);font-size:14px;
+      font-weight:600;min-width:52px;flex-shrink:0;line-height:1.35}
+    .gd-czas span{font-size:12px;color:var(--color-text-muted);font-weight:400}
+    .gd-tresc{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.4}
+    .gd-tresc b{font-size:15px;font-weight:600}
+    .gd-tresc>span{font-size:12.5px;color:var(--color-text-muted)}
+    .gd-opis{font-size:12px;color:var(--color-text-muted);margin-top:3px}
+    .gd-stan{font-size:15px;flex-shrink:0}
+    .gd-akcje{display:flex;gap:8px;margin-top:11px}
+    .gd-akcje .btn{flex:1;justify-content:center;min-height:44px}
+
+    /* Statystyki: dwie kolumny, nie cztery ściśnięte. */
+    .stat-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .stat-b{min-height:82px;padding:12px 13px;gap:11px}
+    .stat-b .si{width:36px;height:36px}
+    .stat-v{font-size:21px}
+    .stat-s{font-size:10.5px}
+
+    /* Filtry: pod sobą, pełna szerokość, duże cele dotykowe. */
+    .tbar{flex-direction:column;align-items:stretch;gap:8px}
+    .tbar .szuk{max-width:none}
+    .tbar .szuk input,.tbar select{height:46px;font-size:16px;width:100%}
+    .tbar-r{margin-left:0;display:flex}
+    .tbar-r .btn{flex:1;justify-content:center;min-height:44px}
+    .gr-chip{min-height:40px;padding:8px 14px;font-size:13.5px}
+
+    /* Nagłówek strony: akcje pod tytułem, na pełną szerokość. */
+    .page-head{flex-direction:column;align-items:stretch;gap:12px}
+    .ph-akcje{display:flex;flex-wrap:wrap;gap:8px}
+    .ph-akcje .btn{flex:1;min-width:calc(50% - 4px);justify-content:center;min-height:44px}
+    .page-head h1{font-size:24px}
+
+    /* Legenda i line-art zabierają miejsce, którego na telefonie nie ma. */
+    .legenda,.tab-stopka .ts-leg{font-size:12px}
+    .farm-art{display:none}
+  }
+
+  @media(max-width:767px){
+    /* ═══ CELE DOTYKOWE ═══════════════════════════════════════════════════════
+       §62: minimum 44x44 px. Wcześniej większość przycisków miała 28–36 px — do
+       trafienia myszą wystarczy, kciukiem w rękawicy przy ciągniku już nie.
+       Reguła jest zbiorcza celowo: każdy nowy przycisk dostaje ją automatycznie,
+       zamiast czekać, aż ktoś zauważy, że znowu jest za mały. */
+    .btn,.btn.small,.kropki,.fl-kropki,.gr-chip,.sn-tab,.mw-b,.pz,
+    .modal-head .x,.nav-icon,.nav-burger,.sb-item,.fl-menu-lista button,
+    .pola-menu button,.opt-card,.upr-w{min-height:44px}
+    .kropki,.fl-kropki{min-width:44px}
+    .modal-head .x{min-width:44px;font-size:22px}
+    .btn{padding:10px 16px;font-size:14px}
+    .btn.small{padding:9px 14px;font-size:13.5px}
+    /* Przełącznik w Ustawieniach — mały suwak trudno trafić. */
+    /* Odstęp między sąsiadującymi przyciskami, żeby nie klikać nie tego. */
+    .zg-akcje,.gd-akcje,.ph-akcje,.pulpit-akcje{gap:9px}
+    /* Checkbox zaznaczania wierszy — powiększamy pole klikalne, nie sam kwadracik. */
+    .kol-zazn{min-width:44px}
+    .upr-w input,.mw-chk input{width:20px;height:20px}
+  }
+
+  @media(max-width:767px){
+    /* Dobicie celów dotykowych, których zbiorcza reguła nie objęła — każdy zmierzony
+       osobno, bo miały własne wysokości: 39, 35, 32, 30 i 26 px. */
+    .op-glowa{min-height:46px}          /* nagłówki sekcji panelu Pulpitu */
+    .tabs .tab{min-height:44px;padding:10px 14px}
+    .fl-chip{min-height:44px;padding:9px 14px}
+    /* Krzyżyki kasowania wpisów w Finansach — 26x24 px to za mało, a leżą tuż obok
+       kwot, więc łatwo skasować nie ten wiersz. */
+    .fin-table .x,.fin-row .x,button.x{min-width:44px;min-height:44px;font-size:20px}
+    /* Wyjątek: krzyżyk zamykania modala ma już swoją regułę wyżej i nie może urosnąć
+       tak, żeby wypchnąć tytuł — zostaje 44x44. */
+  }
+
+  @media(max-width:767px){
+    /* ⚠️ Przełącznik: powiększamy OBSZAR DOTYKU, nie sam suwak.
+       Ustawienie min-height na .switch rozdymało tor do 44 px i wyglądało jak błąd.
+       Zamiast tego przezroczysta ramka 9 px u góry i dołu — tor zostaje wizualnie
+       26 px wysoki, a palec ma 44 px do trafienia. background-clip pilnuje, żeby
+       kolor toru nie wylał się na ramkę. */
+    .switch{height:44px;width:56px;border:9px solid transparent;
+      background-clip:content-box;border-radius:99px}
+    .switch span{top:12px;left:5px;width:20px;height:20px}
+    .switch.on span{left:31px}
+  }
+
+  @media(max-width:767px){
+    /* Pasek trybu lokalnego siadał na dolnej nawigacji — podnosimy go ponad nią. */
+    #devBadge{bottom:calc(74px + env(safe-area-inset-bottom))!important;font-size:11px!important;
+      padding:5px 10px!important}
+
+    .tbar-m{display:flex;gap:8px;margin-bottom:12px}
+    .tbar-m .szuk{position:relative;flex:1;min-width:0}
+    .tbar-m .szuk svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);
+      width:17px;height:17px;color:var(--color-text-muted);pointer-events:none}
+    .tbar-m .szuk input{width:100%;height:46px;padding:0 12px 0 36px;font-size:16px;
+      border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);
+      font-family:var(--sans)}
+    .tbar-m .szuk input:focus{outline:none;border-color:var(--primary);
+      box-shadow:0 0 0 3px var(--primary-soft)}
+    .tbar-m .btn{flex:0 0 auto;min-height:46px;white-space:nowrap}
+
+    /* Przełącznik Tabela/Kafelki nie ma sensu tam, gdzie i tak wymuszamy karty. */
+    .tbar-r{display:none}
+  }
 </style>
   <!-- ═══ Instalacja na telefonie (PWA) ═══════════════════════════════════════
        Po dodaniu do ekranu głównego aplikacja otwiera się bez paska przeglądarki
@@ -2078,6 +2319,7 @@ function defaultSettings(){ return {species:'bydlo', modules:{flota:true, finans
 /* Siedziba gospodarstwa (`farm.adres/kod/miasto/lat/lng`) odpowiada kolumnom tabeli
    `farms` z migracji — po przejściu na Supabase przenosi się jeden do jednego. */
 function emptyState(){ return {farm:{nazwa:'Moje gospodarstwo'}, ui:{}, cropColors:{}, fields:[], machines:[], finance:[], cattle:[], workers:[], schedule:[], settings:defaultSettings()}; }
+const telefon = () => window.matchMedia('(max-width:767px)').matches;
 const maSiedzibe = () => state.farm && state.farm.lat!=null && state.farm.lng!=null;
 function ensureShape(){
   state=state||{}; state.farm=state.farm||{nazwa:'Moje gospodarstwo'}; state.ui=state.ui||{}; state.cropColors=state.cropColors||{};
@@ -2287,6 +2529,7 @@ function modulDostepny(m){
 }
 function goModule(m){
   if(!modulDostepny(m)) m='pulpit';
+  view.menuOtwarte=false;      // wybór z drawera zamyka go
   view.module=m;
   if(m==='pola' && !['pola','sezon'].includes(view.name)) view.name='sezon';
   if(m==='flota') view.machineId=null;
@@ -2482,7 +2725,7 @@ function render(){
   else if(view.module==='todo') content=renderTodoModule();
   else if(view.module==='skup') content=renderSkupModule();
 
-  document.getElementById('app').innerHTML=`${renderNavbar()}<div class="layout${view.sidebarCollapsed?' collapsed':''}">${renderSidebar()}<main class="content${pelnaSzerokosc()?' pelna':''}${view.module==='pulpit'?' pulpit-pelny':''}">${content}</main></div>`;
+  document.getElementById('app').innerHTML=`${renderNavbar()}<div class="layout${view.sidebarCollapsed?' collapsed':''}${view.menuOtwarte?' menu-otwarte':''}">${renderSidebar()}<div class="zaslona" onclick="zamknijMenuMobilne()"></div><main class="content${pelnaSzerokosc()?' pelna':''}${view.module==='pulpit'?' pulpit-pelny':''}">${content}</main></div>${renderDolnaNawigacja()}`;
 
   // Lista kont wczytuje się przy pierwszym wejściu w moduł; potem odświeżamy ją po każdej zmianie.
   if(view.module==='uzytkownicy' && _uzytkownicy===null) setTimeout(odswiezUzytkownikow,0);
@@ -2746,6 +2989,59 @@ function icon(n,s=18){
 /* Topbar jest JASNY — ciemny jest wyłącznie sidebar. Dwa ciemne pasy stykające się
    pod kątem prostym zamykały treść w ramce i odbierały jej powietrze.
    Marka mieszka tutaj, nie w sidebarze: to punkt stały aplikacji, a menu się przewija. */
+/* ═══ NAWIGACJA MOBILNA ════════════════════════════════════════════════════════
+   ⚠️ Na telefonie NIE pokazujemy tych samych kontrolek co na desktopie, tylko mniejsze.
+   Człowiek stoi przy ciągniku, trzyma telefon jedną ręką i ma rękawice — najczęstsze
+   akcje muszą być W ZASIĘGU KCIUKA, czyli na dole ekranu, a nie w prawym górnym rogu.
+
+   Pasek ma pięć pozycji: trzy najczęściej otwierane moduły, środkowy „+" z szybkimi
+   akcjami i „Więcej" otwierające pełne menu. Reszty modułów tu nie ma świadomie —
+   dziesięć ikon w pasku 390 px to dziesięć celów po 39 px, czyli poniżej progu trafialności. */
+const DOLNA_NAWIGACJA = [
+  {m:'pulpit', ik:'pulpit', l:'Pulpit'},
+  {m:'grafik', ik:'grafik', l:'Grafik'},
+  {plus:true},
+  {m:'todo',   ik:'todo',   l:'Do zrobienia'},
+  {wiecej:true, ik:'menu',  l:'Więcej'},
+];
+
+function renderDolnaNawigacja(){
+  const poz=DOLNA_NAWIGACJA.map(x=>{
+    if(x.plus) return `<button class="dn-plus" onclick="otworzSzybkieAkcje()" aria-label="Szybkie akcje">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <path d="M12 5v14M5 12h14"/></svg></button>`;
+    if(x.wiecej) return `<button class="dn-p${view.menuOtwarte?' akt':''}" onclick="przelaczMenuMobilne()">
+      <span class="dn-ik">${ikonaMenu('ustawienia','currentColor')}</span><span>${x.l}</span></button>`;
+    if(!modulDostepny(x.m)) return '';
+    const licz = x.m==='todo' ? (state.tasks||[]).filter(t=>statusZgloszenia(t)==='NEW').length : 0;
+    return `<button class="dn-p${view.module===x.m?' akt':''}" onclick="goModule('${x.m}')">
+      <span class="dn-ik">${ikonaMenu(x.ik,'currentColor')}${licz?`<span class="dn-kropka">${licz}</span>`:''}</span>
+      <span>${x.l}</span></button>`;
+  }).join('');
+  return `<nav class="dolna-nawigacja" aria-label="Nawigacja">${poz}</nav>`;
+}
+
+/* Szybkie akcje: to, co robi się w polu najczęściej i pod presją czasu. */
+function otworzSzybkieAkcje(){
+  const a=[];
+  if(modulDostepny('grafik')) a.push(['grafik','Zadanie','szybkieZadanie()']);
+  if(modulDostepny('todo'))   a.push(['todo','Zgłoszenie do zrobienia','openZgloszenieForm()']);
+  if(modulDostepny('skup')){
+    a.push(['skup','Przyjęcie zboża',"goModule('skup');setTimeout(openPrzyjecie,350)"]);
+    a.push(['skup','Załadunek',"goModule('skup');setTimeout(openZaladunek,350)"]);
+  }
+  a.push(['pola','Nowe pole',"go('nowePole')"]);
+  if(modulDostepny('flota')) a.push(['flota','Maszyna','openMaszynaForm()']);
+  openModal(`
+    <div class="modal-head"><h3>Co chcesz zrobić?</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body"><div class="szybkie">
+      ${a.map(([ik,l,akcja])=>`<button class="sz-p" onclick="closeModal();${akcja}">
+        <span class="sz-ik">${ikonaMenu(ik,'currentColor')}</span><span>${esc(l)}</span></button>`).join('')}
+    </div></div>`);
+}
+function przelaczMenuMobilne(){ view.menuOtwarte=!view.menuOtwarte; render(); }
+function zamknijMenuMobilne(){ if(view.menuOtwarte){ view.menuOtwarte=false; render(); } }
+
 function renderNavbar(){
   const years=allYears();
   const yopts=years.map(y=>`<option value="${y}" ${y===view.year?'selected':''}>Sezon ${y}</option>`).join('');
@@ -4964,7 +5260,48 @@ function statystykiPol(){
   </div>`;
 }
 
+/* ⚠️ Na telefonie trzy kontrolki filtrów jedna pod drugą zajmowały ponad 200 px —
+   ćwierć ekranu, zanim pokazało się pierwsze pole. Zwijamy je pod jeden przycisk,
+   a obok zostaje wyszukiwarka, bo z niej korzysta się najczęściej. */
+function paskFiltrowPolMobile(){
+  const rok=view.year;
+  const uprawy=[...new Set(state.fields.map(f=>(f.sezony||[]).find(s=>s.rok===rok))
+    .filter(Boolean).map(s=>s.uprawa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pl'));
+  const ile=[view.polaUprawa, (view.polaSort&&view.polaSort!=='nazwa')?1:null].filter(Boolean).length;
+  const lupa=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+    stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`;
+  return `<div class="tbar-m">
+    <span class="szuk">${lupa}<input placeholder="Szukaj pola…" value="${esc(view.polaSzukaj||'')}"
+      oninput="view.polaSzukaj=this.value;render()"></span>
+    <button class="btn small${ile?' primary':''}" onclick="filtryPolArkusz()">Filtry${ile?' ('+ile+')':''}</button>
+  </div>`;
+}
+function filtryPolArkusz(){
+  const rok=view.year;
+  const uprawy=[...new Set(state.fields.map(f=>(f.sezony||[]).find(s=>s.rok===rok))
+    .filter(Boolean).map(s=>s.uprawa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pl'));
+  openModal(`
+    <div class="modal-head"><h3>Filtry</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Uprawa</label>
+        <select id="fp_uprawa"><option value="">Wszystkie uprawy</option>
+          ${uprawy.map(x=>`<option value="${esc(x)}" ${view.polaUprawa===x?'selected':''}>${esc(x)}</option>`).join('')}
+        </select></div>
+      <div class="field"><label>Sortowanie</label>
+        <select id="fp_sort">
+          <option value="nazwa" ${(view.polaSort||'nazwa')==='nazwa'?'selected':''}>Nazwa A–Z</option>
+          <option value="ha" ${view.polaSort==='ha'?'selected':''}>Powierzchnia</option>
+          <option value="uprawa" ${view.polaSort==='uprawa'?'selected':''}>Uprawa</option>
+        </select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="view.polaUprawa='';view.polaSort='nazwa';closeModal();render()">Wyczyść</button>
+      <button class="btn primary" onclick="view.polaUprawa=val('fp_uprawa');view.polaSort=val('fp_sort');closeModal();render()">Pokaż wyniki</button>
+    </div>`);
+}
+
 function paskFiltrowPol(){
+  if(telefon()) return paskFiltrowPolMobile();
   const rok=view.year;
   const uprawy=[...new Set(state.fields.map(f=>(f.sezony||[]).find(s=>s.rok===rok))
     .filter(Boolean).map(s=>s.uprawa).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pl'));
@@ -5015,6 +5352,10 @@ function renderFieldsView(){
       + lineArtGospodarstwa();
   }
   const lista=polaPoFiltrach();
+  /* ⚠️ Na telefonie tabela pól MUSI zamienić się w karty. Siedem kolumn ściśniętych
+     do 390 px daje poziome przewijanie wewnątrz wiersza — nie da się porównać dwóch
+     pól, bo nigdy nie widać ich obu naraz. */
+  if(telefon()) return paskFiltrowPol()+kartyPolMobile(lista)+legendaUpraw();
   if(view.polaWidok==='kafle') return paskFiltrowPol()+kafelkiPol(lista)+legendaUpraw()+lineArtGospodarstwa();
 
   const rok=view.year;
@@ -5106,6 +5447,32 @@ function menuPola(btn,id){
     <button onclick="szybkieZadanie('${id}')">+ Zaplanuj pracę</button>`;
   btn.parentNode.appendChild(m);
   setTimeout(()=>document.addEventListener('click',function z(){ m.remove(); document.removeEventListener('click',z); }),0);
+}
+
+/* Karta pola na telefonie: miniatura, nazwa, hektary, uprawa i dwie najważniejsze liczby.
+   Reszta jest w karcie pola — tu pokazujemy to, co pozwala je rozpoznać i wybrać. */
+function kartyPolMobile(lista){
+  const rok=view.year;
+  if(!lista.length) return `<div class="pusto"><b>Nic nie pasuje</b>
+    <span>Zmień filtry albo wyczyść wyszukiwanie.</span></div>`;
+  return `<div class="pola-karty">${lista.map(f=>{
+    const sz=(f.sezony||[]).find(x=>x.rok===rok)||{};
+    const zab=(sz.zabiegi||[]).length;
+    return `<article class="pk" onclick="go('detail','${f.id}')">
+      <div class="pk-gora">
+        ${miniaturaPola(f)}
+        <div class="pk-tyt"><b>${esc(f.nazwa)}</b>
+          <span>${fmt(f.powierzchnia_ha)} ha${f.lokalizacja?' · '+esc(f.lokalizacja):''}</span></div>
+        <button class="kropki" onclick="event.stopPropagation();menuPola(this,'${f.id}')">⋯</button>
+      </div>
+      ${sz.uprawa?`<div class="pk-uprawa">${uprawaZIkona(sz.uprawa,24)}
+        ${sz.odmiana?`<span class="pk-odm">${esc(sz.odmiana)}</span>`:''}</div>`
+        :`<div class="pk-uprawa"><span class="brak">— brak uprawy w ${rok}</span></div>`}
+      <div class="pk-dane">
+        <span><b>${sz.data_siewu?esc(new Date(sz.data_siewu).toLocaleDateString('pl-PL')):'—'}</b>Siew</span>
+        <span><b>${zab||'—'}</b>Zabiegi</span>
+        <span><b>${sz.plon_t_ha?fmt(sz.plon_t_ha)+' t/ha':'—'}</b>Plon</span>
+      </div></article>`;}).join('')}</div>`;
 }
 
 /* Kafle zostają dla tych, którzy wolą oglądać pola jako obrazki. Ten sam zestaw danych. */
@@ -5575,16 +5942,18 @@ function ustawFlote(pole,wartosc){
 }
 
 /* Sama lista/karty — wydzielone, żeby wyszukiwarka mogła odświeżyć wyłącznie tę część. */
-function flotaLista(){
+/* Filtry i sortowanie floty — JEDNO miejsce dla tabeli (desktop) i kart (telefon).
+   Wcześniej ten kod siedział w środku flotaLista() i karty mobilne go nie widziały. */
+function flotaPoFiltrach(){
   const f=state.ui.flota, szuk=(f.szukaj||'').toLowerCase().trim();
-  let lista=state.machines.filter(m=>{
+  const lista=state.machines.filter(m=>{
     if(f.typ && (m.typ||'')!==f.typ) return false;
     if(f.status==='pracuje'){ if(statusMaszyny(m)!=='pracuje') return false; }
     else if(f.status && statusMaszyny(m)!==f.status) return false;
     if(!szuk) return true;
     return [m.nazwa,m.typ,m.marka,m.model,m.nr_rej,m.vin].some(x=>(x||'').toLowerCase().includes(szuk));
   });
-  lista.sort((a,b)=>{
+  return lista.sort((a,b)=>{
     if(f.sort==='serwis'){
       const sa=serwisMaszyny(a), sb=serwisMaszyny(b);
       const va=sa.stan==='brak'?1e9:sa.zostalo, vb=sb.stan==='brak'?1e9:sb.zostalo;
@@ -5593,6 +5962,11 @@ function flotaLista(){
     if(f.sort==='mth') return liczba(b.mth)-liczba(a.mth);
     return (a.nazwa||'').localeCompare(b.nazwa||'','pl');
   });
+}
+
+function flotaLista(){
+  const f=state.ui.flota;
+  const lista=flotaPoFiltrach();
 
   if(!lista.length) return '<div class="fl-wrap"><div class="fl-pusto-box">Żadna maszyna nie pasuje do filtrów.</div></div>';
 
@@ -5729,7 +6103,34 @@ function renderFlotaModule(){
       +'<button class="fl-chip'+(f.widok==='karty'?' akt':'')+'" onclick="ustawFlote(\'widok\',\'karty\')" title="Karty">▦</button>'
     +'</div></div>';
 
-  return head+podsum+toolbar+flotaLista();
+  return head+podsum+toolbar+(telefon()?kartyFlotyMobile():flotaLista());
+}
+
+/* Karta maszyny: stan, aktualna praca i motogodziny — to, po co się tu zagląda w polu.
+   Dziesięć kolumn przewijanych w bok nie odpowiada na żadne z tych pytań szybciej. */
+function kartyFlotyMobile(){
+  const f=state.ui.flota;
+  const lista=flotaPoFiltrach();
+  if(!lista.length) return `<div class="pusto"><b>Nic nie pasuje</b><span>Zmień filtry.</span></div>`;
+  return `<div class="flota-karty">${lista.map(m=>{
+    const st=statusMaszyny(m), z=aktywneZadanieMaszyny(m.id);
+    const w=z?workerById(z.workerId):null, p=z&&z.poleId?poleById(z.poleId):null;
+    const serw=serwisMaszyny(m);
+    return `<article class="fk" onclick="goMachine('${m.id}')">
+      <div class="fk-gora">
+        <span class="fk-ik">${jestCiagnik(m)?'🚜':'🔧'}</span>
+        <div class="fk-tyt"><b>${esc(m.nazwa)}</b>
+          <span>${[m.typ,m.nr_rej].filter(Boolean).map(esc).join(' · ')}</span></div>
+        <span class="fk-stan" style="color:${KOLOR_STATUSU[st]||'var(--color-neutral)'}">● ${esc(st)}</span>
+      </div>
+      ${z?`<div class="fk-praca"><b>${esc(z.zadanie||rodzajPracy(z).label)}</b>
+        <span>${[p?p.nazwa:null, w?w.imie:null, z.od?z.od+(z.do?'–'+z.do:''):null].filter(Boolean).map(esc).join(' · ')}</span></div>`:''}
+      <div class="fk-dane">
+        <span><b>${m.mth?fmt(m.mth):'—'}</b>mth</span>
+        ${serw.stan==='po'||serw.stan==='blisko'
+          ? `<span class="pilne"><b>${esc(serw.opis||'serwis')}</b>Serwis</span>`
+          : `<span><b>${m.interwal?'co '+fmt(m.interwal)+' mth':'—'}</b>Serwis</span>`}
+      </div></article>`;}).join('')}</div>`;
 }
 
 function goMachine(id){ view.module='flota'; view.machineId=id; render(); window.scrollTo(0,0); }
@@ -6623,6 +7024,67 @@ function renderPanelZasobow(){
   </aside>`;
 }
 
+/* Widok dnia: lista zadań posortowana godzinami, pogrupowana po pracownikach.
+   Domyślnie „wszyscy" dla gospodarza, „moje" dla zalogowanego pracownika. */
+function grafikDzienMobile(){
+  const d=view.grafikDzien||fmtISO(new Date());
+  const dt=new Date(d+'T00:00:00');
+  const mojWorker=(trybPracownika&&trybPracownika.workerId)||null;
+  const tylkoMoje = view.grafikMoje!==undefined ? view.grafikMoje : !!mojWorker;
+
+  let zad=state.schedule.filter(z=>z.date===d && z.status!=='anulowane');
+  if(tylkoMoje && mojWorker) zad=zad.filter(z=>z.workerId===mojWorker);
+  zad.sort((a,b)=>(a.od||'').localeCompare(b.od||''));
+
+  const przesun=n=>{ const x=new Date(dt); x.setDate(x.getDate()+n); return fmtISO(x); };
+  const dzisiaj=fmtISO(new Date());
+
+  const karty=zad.length?zad.map(z=>{
+    const M=miejscePracy(z), r=rodzajPracy(z);
+    const p=z.poleId?poleById(z.poleId):null, c=z.ciagnikId?maszynaById(z.ciagnikId):null;
+    const w=workerById(z.workerId), st=STATUSY_ZADAN[z.status||'zaplanowane'];
+    return `<article class="gd-karta" style="border-left-color:${r.kolor}" onclick="pokazZadanie('${z.id}')">
+      <div class="gd-gora">
+        <span class="gd-czas">${esc(z.od||'—')}${z.do?'<span>'+esc(z.do)+'</span>':''}</span>
+        <div class="gd-tresc">
+          <b>${M.ikona} ${esc(z.zadanie||r.label)}</b>
+          <span>${[p?p.nazwa:(z.klient||M.krotko), c?c.nazwa:null, !tylkoMoje&&w?w.imie:null]
+            .filter(Boolean).map(esc).join(' · ')}</span>
+          ${z.opis?`<span class="gd-opis">${esc(z.opis)}</span>`:''}
+        </div>
+        <span class="gd-stan" style="color:${st.kolor}">●</span>
+      </div>
+      ${p&&p.geo?`<div class="gd-akcje">
+        <button class="btn small" onclick="event.stopPropagation();nawigujDoPola('${p.id}')">Nawiguj</button>
+        <button class="btn small primary" onclick="event.stopPropagation();pokazZadanie('${z.id}')">Otwórz</button>
+      </div>`:''}</article>`;
+  }).join(''):`<div class="pusto"><b>Brak zadań na ten dzień</b>
+    <span>${d===dzisiaj?'Dzisiaj nic nie zaplanowano.':'Wybierz inny dzień albo zaplanuj pracę.'}</span></div>`;
+
+  return `<div class="gd-pasek">
+      <button class="kropki" onclick="view.grafikDzien='${przesun(-1)}';render()">‹</button>
+      <div class="gd-data"><b>${d===dzisiaj?'Dzisiaj':esc(dt.toLocaleDateString('pl-PL',{weekday:'long'}))}</b>
+        <span>${esc(dt.toLocaleDateString('pl-PL',{day:'numeric',month:'long'}))}</span></div>
+      <button class="kropki" onclick="view.grafikDzien='${przesun(1)}';render()">›</button>
+    </div>
+    ${mojWorker?`<div class="gr-chipy" style="margin-bottom:12px">
+      <button class="gr-chip${tylkoMoje?' akt':''}" onclick="view.grafikMoje=true;render()">Moje</button>
+      <button class="gr-chip${tylkoMoje?'':' akt'}" onclick="view.grafikMoje=false;render()">Wszyscy</button>
+    </div>`:''}
+    ${d!==dzisiaj?`<button class="btn small" style="width:100%;justify-content:center;margin-bottom:12px"
+      onclick="view.grafikDzien='${dzisiaj}';render()">Wróć do dzisiaj</button>`:''}
+    <div class="gd-lista">${karty}</div>`;
+}
+
+/* Nawigacja do pola: otwiera mapy telefonu na środku obrysu. */
+function nawigujDoPola(id){
+  const f=poleById(id); const pts=(f&&f.geo&&f.geo.polygon)||[];
+  if(!pts.length){ showToast('To pole nie ma obrysu na mapie.'); return; }
+  const s=pts.reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]);
+  const lat=s[0]/pts.length, lng=s[1]/pts.length;
+  window.open('https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng,'_blank');
+}
+
 function ustawGrafik(k,v){ state.ui.grafik[k]=v; save(); render(); }
 function wyczyscFiltryGrafiku(){
   Object.assign(state.ui.grafik,{miejsce:'',pracownik:'',maszyna:'',stan:''}); save(); render();
@@ -6775,6 +7237,10 @@ function renderGrafikModule(){
       <span><b>${polIle}</b> pola w pracach</span>
       ${wgMiejsc.map(([k,n])=>`<span class="gr-ps-m">${MIEJSCA_PRACY[k].ikona} <b>${n}</b> ${esc(MIEJSCA_PRACY[k].krotko.toLowerCase())}</span>`).join('')}
     </div>`;
+
+  /* ⚠️ Tablica 7 dni × pracownicy na 390 px jest nieczytelna — kolumna dnia ma wtedy
+     ok. 40 px. Na telefonie pokazujemy JEDEN dzień w pionie, z przełącznikiem daty. */
+  if(telefon()) return head+grafikDzienMobile();
 
   return head+toolbar+`<div class="grafik-uklad">
       <div class="gr-lewa">
