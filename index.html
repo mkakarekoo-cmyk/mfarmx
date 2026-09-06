@@ -2003,6 +2003,87 @@
     .sb-backup .btn{flex:1;min-width:0;justify-content:center}
     .sb-farm{max-width:100%;box-sizing:border-box}
   }
+
+  /* ═══ Zdjęcia satelitarne Sentinel-2 ════════════════════════════════════════ */
+  .sat-pasek{display:flex;align-items:center;justify-content:space-between;gap:14px;
+    flex-wrap:wrap;margin-bottom:10px}
+  .sat-warstwy{display:flex;gap:5px;flex-wrap:wrap}
+  .sat-w{padding:7px 13px;border:1px solid var(--border);background:var(--surface);
+    border-radius:99px;cursor:pointer;font-family:var(--sans);font-size:12.5px;
+    color:var(--color-text-muted);white-space:nowrap}
+  .sat-w:hover{border-color:var(--primary);color:var(--primary)}
+  .sat-w.akt{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+  .sat-info{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px}
+  .sat-data{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:5px 10px;font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer;
+    color:var(--color-text)}
+  .sat-data:hover{border-color:var(--primary);color:var(--primary)}
+  .sat-chm{font-weight:600}
+  .sat-rozdz,.sat-podp{color:var(--color-text-muted);font-size:11.5px}
+  .sat-lad{color:var(--color-text-muted)}
+  .sat-lad::before{content:'';display:inline-block;width:11px;height:11px;margin-right:7px;
+    border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;
+    animation:obrot .7s linear infinite;vertical-align:-1px}
+  @keyframes obrot{to{transform:rotate(360deg)}}
+  .sat-blad{color:var(--color-danger)}
+  .sat-brak-obrysu{background:var(--accent-soft);border:1px solid var(--accent);
+    border-radius:var(--radius-md);padding:12px 15px;font-size:13px;margin-bottom:10px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+  .sat-hist-tyt{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--color-text-muted);margin:14px 0 7px}
+  .sat-hist{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .sat-hist::-webkit-scrollbar{display:none}
+  .sat-h{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:8px 11px;border:1px solid var(--border);background:var(--surface);
+    border-radius:var(--radius-sm);cursor:pointer;font-family:var(--sans);min-width:62px}
+  .sat-h b{font-size:13px;font-weight:600;color:var(--color-text)}
+  .sat-h span{font-size:11px;color:var(--color-text-muted)}
+  .sat-h span.zle{color:var(--color-danger)}
+  .sat-h.akt{border-color:var(--primary);background:var(--primary-soft)}
+
+  .sat-staty{background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-md);padding:13px 15px;margin-top:14px}
+  .ss-tyt{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--color-text-muted);margin-bottom:9px}
+  .ss-w{display:flex;align-items:baseline;gap:10px;padding:5px 0;
+    border-top:1px solid var(--border-light)}
+  .ss-w:first-of-type{border-top:none}
+  .ss-w>span:first-child{font-size:13px;min-width:120px}
+  .ss-w b{font-size:17px;font-variant-numeric:tabular-nums}
+  .ss-zak{font-size:11.5px;color:var(--color-text-muted)}
+  .ss-uwaga{font-size:11.5px;color:var(--color-text-muted);margin-top:9px;line-height:1.45}
+
+  .sat-lista{display:flex;flex-direction:column;gap:6px}
+  .sat-lp{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;
+    border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-sm);
+    cursor:pointer;font-family:var(--sans);min-height:48px}
+  .sat-lp.akt{border-color:var(--primary);background:var(--primary-soft)}
+  .sat-lp b{font-size:14.5px}
+  .sat-lp span{font-size:12.5px;color:var(--color-text-muted)}
+
+  .sat-suwak{position:relative;margin-top:-34px;height:34px;pointer-events:none;z-index:500}
+  .sat-suwak input{position:absolute;left:0;right:0;top:6px;width:100%;pointer-events:auto;
+    accent-color:var(--accent)}
+  .sat-suwak .ss-a,.sat-suwak .ss-b{position:absolute;top:-26px;font-size:11px;font-weight:700;
+    background:rgba(20,35,41,.82);color:#fff;padding:3px 8px;border-radius:4px}
+  .sat-suwak .ss-a{left:8px} .sat-suwak .ss-b{right:8px}
+  .sat-suwak .ss-linia{position:absolute;top:-190px;bottom:34px;width:2px;background:#fff;
+    box-shadow:0 0 4px rgba(0,0,0,.5)}
+
+  /* Mapa pola przestała być miniaturą — musi mieć w czym pokazać zobrazowanie. */
+  .mini-map{height:clamp(320px,46vh,520px)!important}
+
+  @media(max-width:767px){
+    /* Warstwy przewijane poziomo — sześć przycisków nie zmieści się w rzędzie. */
+    .sat-warstwy{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:3px}
+    .sat-warstwy::-webkit-scrollbar{display:none}
+    .sat-w{flex:0 0 auto;min-height:40px}
+    .sat-pasek{flex-direction:column;align-items:stretch;gap:9px}
+    .sat-info{font-size:12px}
+    .mini-map{height:clamp(280px,42vh,380px)!important}
+    .ss-w>span:first-child{min-width:90px}
+  }
 </style>
   <!-- ═══ Instalacja na telefonie (PWA) ═══════════════════════════════════════
        Po dodaniu do ekranu głównego aplikacja otwiera się bez paska przeglądarki
@@ -5071,17 +5152,338 @@ async function mapSearch(q){
   }catch(e){ alert('Wyszukiwanie wymaga internetu.'); }
 }
 
+/* ═══ ZDJĘCIA SATELITARNE SENTINEL-2 ═══════════════════════════════════════════
+   Podgląd stanu pola z Copernicus Data Space — świeższy niż podkład mapowy,
+   ale o niższej szczegółowości.
+
+   ⚠️ CLIENT SECRET COPERNICUSA NIE ISTNIEJE W TYM PLIKU i istnieć nie może. Cała
+   komunikacja idzie przez funkcję serwerową `satelita`, która trzyma sekret po stronie
+   Supabase. Przeglądarka podaje wyłącznie id pola, datę i NAZWĘ warstwy — evalscripty
+   są zdefiniowane na serwerze, żeby nie dało się wykonać cudzego kodu na nasz koszt.
+
+   ⚠️ CO TO NIE JEST: Sentinel-2 ma 10 m/piksel (a NDRE i NDMI korzystają z pasm
+   20-metrowych). To nie jest ortofotomapa ani zdjęcie z drona. Nie stawiamy też
+   diagnoz — pokazujemy wskaźnik, nie „chorobę" czy „brak azotu". */
+
+const SAT_WLACZONY = true;                 // wyłącznik całej funkcji
+const SAT_ODSWIEZ_PO_H = 12;               // nie pytamy o nowe sceny częściej niż co tyle godzin
+
+const WARSTWY_SAT = {
+  satelita:  {label:'Satelita',   opis:'Wysokorozdzielczy podkład mapowy',            zrodlo:'mapa'},
+  truecolor: {label:'Najnowsze',  opis:'Najnowsze użyteczne zobrazowanie Sentinel-2', zrodlo:'sentinel'},
+  ndvi:      {label:'NDVI',       opis:'Kondycja roślinności (B08−B04)/(B08+B04)',    zrodlo:'sentinel'},
+  ndre:      {label:'NDRE',       opis:'Red-edge (B08−B05)/(B08+B05) · pasmo 20 m',   zrodlo:'sentinel'},
+  ndmi:      {label:'Wilgotność', opis:'NDMI (B08−B11)/(B08+B11) — wskaźnik spektralny związany z zawartością wody w roślinności. NIE jest pomiarem wilgotności gleby.', zrodlo:'sentinel'},
+};
+const JAKOSC_SAT = {
+  DOBRE:             {label:'Dobre warunki',          kolor:'var(--color-success)'},
+  CZESCIOWE:         {label:'Częściowe zachmurzenie', kolor:'var(--color-warning)'},
+  DUZE_ZACHMURZENIE: {label:'Duże zachmurzenie',      kolor:'var(--color-danger)'},
+  BRAK:              {label:'Brak danych',            kolor:'var(--color-neutral)'},
+};
+
+/* ⚠️ CACHE JEST OBOWIĄZKOWY, nie optymalizacją. Korzystamy z darmowego limitu
+   Copernicusa — bez cache każde otwarcie pola generowałoby te same obrazy od nowa.
+   Klucz: pole + data + warstwa. Trzymamy w pamięci karty; sceny dodatkowo w stanie
+   gospodarstwa, żeby przeżyły odświeżenie strony. */
+const satCache = new Map();
+const satWLocie = new Map();      // deduplikacja: pięć wywołań tego samego = jeden request
+
+async function satZapytaj(akcja, fieldId, dodatkowe){
+  const klucz = akcja+'|'+fieldId+'|'+JSON.stringify(dodatkowe||{});
+  if(satCache.has(klucz)) return satCache.get(klucz);
+  if(satWLocie.has(klucz)) return satWLocie.get(klucz);
+
+  const obietnica = (async()=>{
+    const { data, error } = await sb.functions.invoke('satelita',
+      {body:Object.assign({akcja, fieldId}, dodatkowe||{})});
+    if(error) throw new Error(bladSatOpis(error));
+    if(data && data.blad) throw new Error(data.opis || data.blad);
+    satCache.set(klucz, data);
+    return data;
+  })().finally(()=>satWLocie.delete(klucz));
+
+  satWLocie.set(klucz, obietnica);
+  return obietnica;
+}
+
+/* Komunikaty po ludzku — użytkownik nie ma czytać kodów HTTP. */
+function bladSatOpis(e){
+  const t=String((e&&e.message)||e||'');
+  if(/429|limit/i.test(t)) return 'Zdjęcia satelitarne są chwilowo niedostępne (limit zapytań). Spróbuj za kilka minut.';
+  if(/401|403/.test(t))    return 'Brak dostępu do zdjęć satelitarnych dla tego pola.';
+  if(/404|not found|failed to send|non-2xx/i.test(t))
+    return 'Funkcja satelitarna nie jest jeszcze wdrożona w Supabase (Edge Functions → satelita).';
+  if(/timeout|network|fetch/i.test(t)) return 'Brak połączenia z serwisem zdjęć satelitarnych.';
+  return t || 'Nie udało się pobrać danych satelitarnych.';
+}
+
+/* Stan podglądu — jeden na otwarte pole. */
+let satStan = null;
+
+function satResetuj(fieldId){
+  satStan = {fieldId, warstwa:'satelita', data:null, sceny:[], scena:null,
+             staty:null, blad:null, laduje:false, porownanie:null, suwak:50};
+}
+
+/* ⚠️ Sceny sprawdzamy najwyżej raz na SAT_ODSWIEZ_PO_H godzin. Katalog Copernicusa
+   nie zmienia się częściej niż co kilka dni, a każde wejście w pole generowałoby
+   niepotrzebne zapytanie. Znacznik trzymamy przy polu. */
+function satTrzebaOdswiezyc(f){
+  const t=f.satOstatnioSprawdzone ? Date.parse(f.satOstatnioSprawdzone) : 0;
+  return !t || (Date.now()-t) > SAT_ODSWIEZ_PO_H*3600e3;
+}
+
+async function satWczytajNajnowsze(){
+  const f=poleById(satStan.fieldId); if(!f) return;
+  satStan.laduje=true; satStan.blad=null; rysujPanelSat();
+  try{
+    // Zapamiętane sceny wystarczą, jeśli sprawdzaliśmy niedawno.
+    let dane;
+    if(!satTrzebaOdswiezyc(f) && (f.satSceny||[]).length){
+      dane={sceny:f.satSceny, scena:f.satScena};
+    }else{
+      dane=await satZapytaj('najnowsza', satStan.fieldId, {dni:30});
+      f.satSceny=dane.sceny; f.satScena=dane.scena;
+      f.satOstatnioSprawdzone=new Date().toISOString();
+      save();
+    }
+    satStan.sceny=dane.sceny||[];
+    satStan.scena=dane.scena||null;
+    satStan.data=satStan.scena?satStan.scena.data:null;
+    if(!satStan.scena) satStan.blad='Brak użytecznego zobrazowania w ostatnich 30 dniach.';
+  }catch(e){ satStan.blad=e.message; }
+  satStan.laduje=false;
+  rysujPanelSat();
+}
+
+/* Obraz pobieramy DOPIERO po wybraniu warstwy — nie ściągamy NDVI, NDRE i NDMI naraz. */
+let warstwaObrazSat=null;
+async function satPokazWarstwe(warstwa){
+  satStan.warstwa=warstwa;
+  satStan.blad=null;
+  if(warstwa==='satelita'){ satZdejmijObraz(); rysujPanelSat(); return; }
+  if(!satStan.data){ await satWczytajNajnowsze(); if(!satStan.data){ rysujPanelSat(); return; } }
+  await satNalozObraz();
+}
+
+function satZdejmijObraz(){
+  if(warstwaObrazSat && MINI_MAP){ try{ MINI_MAP.removeLayer(warstwaObrazSat); }catch(e){} }
+  warstwaObrazSat=null;
+}
+
+async function satNalozObraz(){
+  if(!MINI_MAP) return;
+  satStan.laduje=true; rysujPanelSat();
+  try{
+    const d=await satZapytaj('obraz', satStan.fieldId, {data:satStan.data, warstwa:satStan.warstwa});
+    satZdejmijObraz();
+    // bbox z serwera: [zachód, południe, wschód, północ] → Leaflet chce [[płd,zach],[płn,wsch]]
+    const b=d.bbox;
+    warstwaObrazSat=L.imageOverlay(d.obraz, [[b[1],b[0]],[b[3],b[2]]], {opacity:1, interactive:false});
+    warstwaObrazSat.addTo(MINI_MAP);
+    if(warstwaObrysSat) warstwaObrysSat.bringToFront();
+  }catch(e){ satStan.blad=e.message; }
+  satStan.laduje=false;
+  rysujPanelSat();
+}
+
+async function satWczytajStaty(){
+  if(!satStan.data) return;
+  try{ satStan.staty=await satZapytaj('staty', satStan.fieldId, {data:satStan.data}); }
+  catch(e){ satStan.staty=null; }
+  rysujPanelSat();
+}
+
+function satZmienDate(data){
+  satStan.data=data; satStan.staty=null;
+  satStan.scena=(satStan.sceny||[]).find(s=>s.data===data)||satStan.scena;
+  if(satStan.warstwa!=='satelita') satNalozObraz(); else rysujPanelSat();
+}
+
+/* ─── Interfejs podglądu satelitarnego ─────────────────────────────────────── */
+
+function renderPasekSat(){
+  if(!SAT_WLACZONY) return '';
+  const f=poleById(view.fieldId);
+  if(!f || !f.geo || !(f.geo.polygon||[]).length){
+    return `<div class="sat-brak-obrysu">Zdjęcia satelitarne wymagają obrysu pola.
+      <button class="btn small" onclick="rysujObrysPola('${view.fieldId}')">Narysuj obrys</button></div>`;
+  }
+  const w=satStan?satStan.warstwa:'satelita';
+  return `<div class="sat-pasek">
+    <div class="sat-warstwy">
+      ${Object.entries(WARSTWY_SAT).map(([k,v])=>
+        `<button class="sat-w${w===k?' akt':''}" title="${esc(v.opis)}"
+          onclick="satPokazWarstwe('${k}')">${esc(v.label)}</button>`).join('')}
+      <button class="sat-w${satStan&&satStan.porownanie?' akt':''}" title="Porównaj dwa terminy"
+        onclick="satPorownajOtworz()">Porównaj</button>
+    </div>
+    <div class="sat-info" id="satInfo">${renderInfoSat()}</div>
+  </div>`;
+}
+
+function renderInfoSat(){
+  if(!satStan) return '';
+  if(satStan.laduje) return `<span class="sat-lad">${satStan.warstwa==='satelita'
+    ? 'Sprawdzamy dostępne zobrazowania…' : 'Ładowanie danych Sentinel-2…'}</span>`;
+  if(satStan.blad) return `<span class="sat-blad">${esc(satStan.blad)}</span>`;
+  if(satStan.warstwa==='satelita') return `<span class="sat-podp">Podkład mapowy — nie Sentinel</span>`;
+  if(!satStan.scena) return '';
+  const s=satStan.scena, j=JAKOSC_SAT[s.jakosc]||JAKOSC_SAT.BRAK;
+  const chm = s.chmuryPole!=null ? s.chmuryPole+'%' : (s.chmuryScena!=null? s.chmuryScena+'% (scena)' : '—');
+  return `<button class="sat-data" onclick="satWybierzDate()">${esc(dataPL(satStan.data))} ▾</button>
+    <span class="sat-chm" style="color:${j.kolor}">● ${esc(j.label)} · zachmurzenie pola ${esc(chm)}</span>
+    <span class="sat-rozdz">Sentinel-2 · 10 m/piksel${['ndre','ndmi'].includes(satStan.warstwa)?' (pasmo 20 m)':''}</span>`;
+}
+const dataPL = d => d ? d.split('-').reverse().join('.') : '—';
+
+function rysujPanelSat(){
+  const el=document.getElementById('satInfo'); if(el) el.innerHTML=renderInfoSat();
+  const h=document.getElementById('satHistoria'); if(h) h.innerHTML=renderHistoriaSat();
+  const st=document.getElementById('satStaty'); if(st) st.innerHTML=renderStatySat();
+  document.querySelectorAll('.sat-w').forEach(b=>{
+    const t=(b.getAttribute('onclick')||'').match(/'([a-z]+)'/);
+    if(t) b.classList.toggle('akt', satStan && satStan.warstwa===t[1]);
+  });
+}
+
+/* Historia: lista dostępnych zobrazowań, nie kalendarz. ⚠️ Pokazywanie pustych dni,
+   dla których satelita nie przelatywał, kazałoby użytkownikowi zgadywać. */
+function renderHistoriaSat(){
+  if(!satStan || !(satStan.sceny||[]).length) return '';
+  return `<div class="sat-hist-tyt">Dostępne zobrazowania</div>
+    <div class="sat-hist">${satStan.sceny.slice(0,14).map(s=>{
+      const chm = s.chmuryPole!=null ? s.chmuryPole : s.chmuryScena;
+      const zle = chm!=null && chm>40;
+      return `<button class="sat-h${satStan.data===s.data?' akt':''}" onclick="satZmienDate('${s.data}')">
+        <b>${esc(s.data.slice(8)+'.'+s.data.slice(5,7))}</b>
+        <span class="${zle?'zle':''}">${chm!=null?chm+'%':'—'}</span></button>`;
+    }).join('')}</div>`;
+}
+
+function renderStatySat(){
+  if(!satStan) return '';
+  if(satStan.warstwa==='satelita' || !satStan.data) return '';
+  if(!satStan.staty) return `<button class="btn small" style="width:100%;justify-content:center"
+    onclick="satWczytajStaty()">Policz wskaźniki dla tego pola</button>`;
+  const s=satStan.staty;
+  const w=(k,etyk)=>{ const v=s[k]; if(!v||v.srednia==null) return '';
+    return `<div class="ss-w"><span>${etyk}</span>
+      <b>${v.srednia.toFixed(2)}</b>
+      <span class="ss-zak">min ${v.min.toFixed(2)} · max ${v.max.toFixed(2)}</span></div>`; };
+  return `<div class="sat-staty">
+    <div class="ss-tyt">Wskaźniki · ${esc(dataPL(s.data))}</div>
+    ${w('ndvi','NDVI')}${w('ndre','NDRE')}${w('ndmi','NDMI / wilgotność')}
+    <div class="ss-uwaga">Wartości liczone tylko z pikseli bez chmur i cieni.
+      To wskaźniki spektralne, nie diagnoza stanu uprawy.</div>
+  </div>`;
+}
+
+function satWybierzDate(){
+  if(!satStan || !(satStan.sceny||[]).length) return;
+  openModal(`
+    <div class="modal-head"><h3>Wybierz zobrazowanie</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body"><div class="sat-lista">
+      ${satStan.sceny.map(s=>{
+        const chm=s.chmuryPole!=null?s.chmuryPole:s.chmuryScena;
+        return `<button class="sat-lp${satStan.data===s.data?' akt':''}"
+          onclick="closeModal();satZmienDate('${s.data}')">
+          <b>${esc(dataPL(s.data))}</b>
+          <span>zachmurzenie ${chm!=null?chm+'%':'—'}</span></button>`;
+      }).join('')}
+    </div></div>`);
+}
+
+/* Porównanie dwóch terminów — suwak dzielący mapę. ⚠️ Bez dokładania biblioteki:
+   drugi obraz przycinamy przez clip-path, a suwak zmienia tylko jedną liczbę. */
+function satPorownajOtworz(){
+  if(!satStan || (satStan.sceny||[]).length<2){ showToast('Potrzebne co najmniej dwa zobrazowania.'); return; }
+  const opcje=s=>satStan.sceny.map(x=>`<option value="${x.data}" ${s===x.data?'selected':''}>${dataPL(x.data)}</option>`).join('');
+  const a=satStan.sceny[0].data, b=satStan.sceny[1].data;
+  openModal(`
+    <div class="modal-head"><h3>Porównaj terminy</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field row2">
+        <div><label>Data A (lewa)</label><select id="pa_a">${opcje(a)}</select></div>
+        <div><label>Data B (prawa)</label><select id="pa_b">${opcje(b)}</select></div>
+      </div>
+      <div class="field"><label>Warstwa</label><select id="pa_w">
+        <option value="truecolor">Najnowsze (kolory naturalne)</option>
+        <option value="ndvi">NDVI</option></select></div>
+    </div>
+    <div class="modal-foot"><div class="spacer"></div>
+      <button class="btn" onclick="closeModal()">Anuluj</button>
+      <button class="btn primary" onclick="satPorownajUruchom()">Porównaj</button></div>`);
+}
+
+let warstwaPorownanieSat=null;
+async function satPorownajUruchom(){
+  const a=val('pa_a'), b=val('pa_b'), w=val('pa_w');
+  closeModal();
+  if(a===b){ showToast('Wybierz dwa różne terminy.'); return; }
+  satStan.porownanie={a,b,warstwa:w}; satStan.warstwa=w; satStan.data=a;
+  satStan.laduje=true; rysujPanelSat();
+  try{
+    const [oa,ob]=await Promise.all([
+      satZapytaj('obraz', satStan.fieldId, {data:a, warstwa:w}),
+      satZapytaj('obraz', satStan.fieldId, {data:b, warstwa:w}),
+    ]);
+    satZdejmijObraz();
+    if(warstwaPorownanieSat && MINI_MAP){ try{MINI_MAP.removeLayer(warstwaPorownanieSat);}catch(e){} }
+    const bb=oa.bbox, granice=[[bb[1],bb[0]],[bb[3],bb[2]]];
+    warstwaObrazSat=L.imageOverlay(oa.obraz, granice, {interactive:false}).addTo(MINI_MAP);
+    warstwaPorownanieSat=L.imageOverlay(ob.obraz, granice, {interactive:false, className:'sat-porownanie'}).addTo(MINI_MAP);
+    if(warstwaObrysSat) warstwaObrysSat.bringToFront();
+    satUstawSuwak(satStan.suwak);
+    pokazSuwakPorownania(a,b);
+  }catch(e){ satStan.blad=e.message; }
+  satStan.laduje=false; rysujPanelSat();
+}
+function satUstawSuwak(proc){
+  satStan.suwak=proc;
+  const el=document.querySelector('.sat-porownanie');
+  if(el) el.style.clipPath='inset(0 0 0 '+proc+'%)';
+  const l=document.getElementById('satSuwakLinia'); if(l) l.style.left=proc+'%';
+}
+function pokazSuwakPorownania(a,b){
+  const stary=document.getElementById('satSuwak'); if(stary) stary.remove();
+  const ramka=document.getElementById('miniMap'); if(!ramka) return;
+  const d=document.createElement('div'); d.id='satSuwak'; d.className='sat-suwak';
+  d.innerHTML=`<span class="ss-a">${dataPL(a)}</span><span class="ss-b">${dataPL(b)}</span>
+    <div class="ss-linia" id="satSuwakLinia"></div>
+    <input type="range" min="0" max="100" value="${satStan.suwak}"
+      oninput="satUstawSuwak(+this.value)" aria-label="Granica porównania">`;
+  ramka.parentNode.appendChild(d);
+  satUstawSuwak(satStan.suwak);
+}
+
+
+/* ⚠️ Mapa pola była wcześniej martwą miniaturą (dragging:false, brak zoomu). Odkąd
+   pokazuje zobrazowania Sentinel-2, musi dać się przybliżyć i przesunąć — inaczej nie
+   da się obejrzeć fragmentu działki. Podkład zostaje ten sam. */
+let MINI_MAP=null, warstwaObrysSat=null;
 function initMiniMap(){
   const el=document.getElementById('miniMap');
   if(!el||typeof L==='undefined') return;
   const f=state.fields.find(x=>x.id===view.fieldId);
   if(!f||!f.geo||!f.geo.polygon) return;
-  const m=L.map(el,{zoomControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,attributionControl:false});
+  if(MINI_MAP){ try{MINI_MAP.remove();}catch(e){} MINI_MAP=null; }
+  const m=L.map(el,{zoomControl:true,attributionControl:false});
+  MINI_MAP=m;
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19}).addTo(m);
   const last=latestSeason(f), col=cropColor(last&&last.uprawa);
-  const poly=L.polygon(f.geo.polygon,{color:col,weight:2,fillColor:col,fillOpacity:.4}).addTo(m);
-  m.fitBounds(poly.getBounds().pad(0.4));
+  /* Obrys BEZ wypełnienia, gdy pod spodem leży zdjęcie — półprzezroczysta plama
+     zafałszowałaby kolory NDVI, które właśnie przyszliśmy obejrzeć. */
+  warstwaObrysSat=L.polygon(f.geo.polygon,{color:'#FFFFFF',weight:3,fill:false,interactive:false}).addTo(m);
+  L.polygon(f.geo.polygon,{color:col,weight:1.6,fill:false,interactive:false}).addTo(m);
+  m.fitBounds(warstwaObrysSat.getBounds().pad(0.35));
   setTimeout(()=>m.invalidateSize(),60);
+
+  if(SAT_WLACZONY){
+    if(!satStan || satStan.fieldId!==view.fieldId) satResetuj(view.fieldId);
+    rysujPanelSat();
+  }
 }
 
 /* =========================================================
@@ -5631,7 +6033,7 @@ function renderDetail(){
       </div>
     </div>
     ${f.komentarz?`<div class="geo-note" style="background:rgba(200,155,44,.12);border-color:rgba(200,155,44,.35);color:var(--ink);margin-bottom:20px">📝 ${esc(f.komentarz)}</div>`:''}
-    ${hasGeo?`<div id="miniMap" class="mini-map"></div>`:''}
+    ${hasGeo?`${renderPasekSat()}<div id="miniMap" class="mini-map"></div><div id="satHistoria"></div><div id="satStaty"></div>`:''}
     ${(()=>{ const teraz=maszynyNaPolu(f.id); if(!teraz.length) return '';
       // „Aktualnie" — liczone z zadań na dziś, nic tu nie jest zapisywane przy polu.
       return `<div class="pole-teraz">
